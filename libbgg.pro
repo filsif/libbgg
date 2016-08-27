@@ -28,13 +28,16 @@ SOURCES += src/libbgg/api.cpp \
     src/libbgg/models.cpp \
     src/libbgg/query/boardgame.cpp \
     src/libbgg/query/image.cpp \
-    src/libbgg/query/search.cpp
+    src/libbgg/query/search.cpp \
+    src/libbgg/query/searchcollection.cpp
 
 HEADERS += inc/libbgg/api.h \
     inc/libbgg/models.h \
     inc/libbgg/query/boardgame.h \
     inc/libbgg/query/image.h \
-    inc/libbgg/query/search.h
+    inc/libbgg/query/search.h \
+    inc/libbgg/bgg.h \
+    inc/libbgg/query/searchcollection.h
 unix {
     target.path = /usr/lib
     INSTALLS += target

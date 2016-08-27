@@ -24,14 +24,14 @@ class SearchQuery :
 {
     Q_OBJECT
 public:
-    explicit            SearchQuery             (BggApi & api , const QString &query );
-    virtual             ~SearchQuery            ();
+    explicit                    SearchQuery             (BggApi & api , const QString &query );
+    virtual                     ~SearchQuery            ();
 
 signals:
-    void                results                 ( Bgg::SearchQuery *);
+    void                        results                 ( Bgg::SearchQuery *);
 
 private slots:
-    void                on_search_query_finished();
+    void                        on_search_query_finished();
 
 public :
     const SearchSummaryList_sp& results         () const { return m_results; }
@@ -40,10 +40,10 @@ public :
 
 private :
 
-    BggApi &                m_api;
-    QString                 m_query;
-    QNetworkReply *         m_reply;
-    SearchSummaryList_sp    m_results;
+    BggApi &                    m_api;
+    QString                     m_query;
+    QNetworkReply *             m_reply;
+    SearchSummaryList_sp        m_results;
 };
 }
 

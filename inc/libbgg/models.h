@@ -4,7 +4,8 @@
 #include <QList>
 #include <QPixmap>
 #include <QUrl>
-#include <QXmlItem>
+#include <QDomDocument>
+#include <QDate>
 
 namespace Bgg
 {
@@ -40,7 +41,7 @@ class IBGGObject
 {
 public:
 
-    virtual bool    load                (const QXmlItem&) = 0;
+    virtual bool    load                (const QDomNode&) = 0;
 };
 
 
@@ -53,8 +54,8 @@ typedef QList<MediaObject_sp> MediaObjectList_sp;
 *	\class	MediaObject
 *	\author	frederic MAZUR
 *	\date	13/07/2016
-*	\brief	Interface for managing Poster anbd Backdrop images
-*	It might be inherited by classes that need Poster and Backdrop in the results.
+*	\brief	Interface for managing Cover and Thumbnail images
+*	It might be inherited by classes that need Cover and Thumbnail in the results.
 */
 class MediaObject
         : public IBGGObject
@@ -73,7 +74,47 @@ public :
 
     static MediaObject_sp   null;
 
-    bool            load                (const QXmlItem&);
+    bool            load                (const QDomNode&);
+
+
+
+
+    const QString& coverPath() const
+    {
+        return m_coverPath;
+    }
+
+    const QString& thumbnailPath() const
+    {
+        return m_thumbnailPath;
+    }
+
+    void setImage( ImageType imageType , const QPixmap & pixmap )
+    {
+        do_set_image( imageType , pixmap);
+    }
+
+    void setCover( const QPixmap& pixmap )
+    {
+        do_set_image( Cover , pixmap);
+    }
+
+    QPixmap cover( ) const
+    {
+        return do_get_image( Cover );
+    }
+
+    void setThumbail( const QPixmap& pixmap )
+    {
+        do_set_image( Thumbnail , pixmap);
+    }
+
+    QPixmap thumbnail( ) const
+    {
+        return do_get_image( Thumbnail );
+    }
+
+
 
     inline int      id                  () const
     {
@@ -91,35 +132,68 @@ protected :
 };
 
 
-class SearchSummary;
-typedef QSharedPointer<SearchSummary> SearchSummary_sp;
+
 
 /*!
 *	\class	SearchSummary
 *	\author	Frederic MAZUR
 *	\date	13/07/2016
-*	\brief	Gathers the summary infos for boardggame media
+*	\brief	Gathers the summary infos for boardgame media
 */
 class SearchSummary
     : public MediaObject
 {
 public:
+                                SearchSummary               ();
     virtual                     ~SearchSummary              () {}
 
 
     int                         id                          ( ) const;
 
-    virtual bool                load                        (const QXmlItem&);
+    virtual bool                load                        (const QDomNode &);
 
 
 
 protected:
-                                SearchSummary               ();
-    int                         m_id;
+
+
     QString                     m_title;
 };
 
-typedef QList<SearchSummary_sp> SearchSummaryList_sp;
+
+typedef QSharedPointer<SearchSummary>   SearchSummary_sp;
+typedef QList<SearchSummary_sp>         SearchSummaryList_sp;
+
+
+/*!
+*	\class	SearchCollectionSummary
+*	\author	Frederic MAZUR
+*	\date	27/08/2016
+*	\brief	Gathers the list of boardgames for a given collection
+*/
+class SearchCollectionSummary
+    : public MediaObject
+{
+public:
+                                SearchCollectionSummary               ();
+    virtual                     ~SearchCollectionSummary              () {}
+
+
+    int                         id                          ( ) const;
+
+    virtual bool                load                        (const QDomNode &);
+
+
+
+protected:
+
+
+    QString                     m_title;
+};
+
+
+typedef QSharedPointer<SearchCollectionSummary>   SearchCollectionSummary_sp;
+typedef QList<SearchCollectionSummary_sp>         SearchCollectionSummaryList_sp;
 
 
 
@@ -134,7 +208,7 @@ class BoardGameInfo
 {
 
 public:
-                        BoardGameInfo   (int boardgameId);
+                        BoardGameInfo   ();
     virtual             ~BoardGameInfo  ();
 
 
@@ -143,12 +217,12 @@ public:
     *	\returns true if the infos could be read
     *	\returns false if the \a result object is empty
     */
-    bool                load            (const QXmlItem&);
+    bool                load            (const QDomNode&);
 
     int                 boardgameId     () const { return id(); }
     const QString&		title           () const;
     const QString&		synopsis        () const;
-    int                 year            () const;
+    QDate               year            () const;
     int                 minAge          () const;
     int                 minPlayer       () const;
     int                 maxPlayer       () const;
@@ -160,7 +234,7 @@ public:
 private:
     QString				m_title;
     QString             m_synopsis;
-    int					m_year;
+    QDate   			m_year;
     int                 m_min_age;
     int                 m_min_player;
     int                 m_max_player;
@@ -168,7 +242,8 @@ private:
 
 };
 
-typedef QSharedPointer<BoardGameInfo> BoardGameInfo_sp;
+typedef QSharedPointer<BoardGameInfo>   BoardGameInfo_sp;
+typedef QList<BoardGameInfo_sp>         BoardGameInfoList_sp;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,6 +251,11 @@ typedef QSharedPointer<BoardGameInfo> BoardGameInfo_sp;
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline int SearchSummary::id() const
+{
+    return m_id;
+}
+
+inline int SearchCollectionSummary::id() const
 {
     return m_id;
 }
@@ -189,7 +269,7 @@ inline const QString& BoardGameInfo::synopsis() const
     return m_synopsis;
 }
 
-inline int BoardGameInfo::year() const
+inline QDate BoardGameInfo::year() const
 {
     return m_year;
 }

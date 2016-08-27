@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QNetworkReply>
+#include <QList>
 
 
 #include <libbgg/models.h>
@@ -26,26 +27,26 @@ class BoardGameQuery :
 {
     Q_OBJECT
 public:
-    explicit            BoardGameQuery             (BggApi & api ,  int  bgid );
+    explicit            BoardGameQuery             (BggApi & api ,  const QList<int> &  bgid_list );
     virtual             ~BoardGameQuery            ();
 
 signals:
-    void                results                 ( Bgg::BoardGameQuery *);
+    void                result                     ( Bgg::BoardGameQuery *);
 
 private slots:
     void                on_search_query_finished();
 
 public :
-    const MediaObject_sp&       results         () const { return m_results; }
+    const MediaObjectList_sp&   results         () const { return m_results; }
     bool                        isRunning       () const;
     void                        abort           ();
 
 private :
 
     BggApi &                m_api;
-    int                     m_bgid;
+    QList<int>              m_bgid_list; // make own copy and not a reference
     QNetworkReply *         m_reply;
-    MediaObject_sp          m_results;
+    MediaObjectList_sp      m_results;
 };
 }
 

@@ -6,6 +6,7 @@
 #include <QMutex>
 
 #include <libbgg/query/search.h>
+#include <libbgg/query/searchcollection.h>
 #include <libbgg/query/boardgame.h>
 #include <libbgg/query/image.h>
 
@@ -36,7 +37,8 @@ public:
     QNetworkReply *         getReply                    ( QNetworkRequest & request );
 
     SearchQuery *           searchQuery                 ( const QString& title );
-    BoardGameQuery *        boardgameQuery              ( int boardgameId );
+    SearchCollectionQuery * searchCollectionQuery       ( const QString& title );
+    BoardGameQuery *        boardgameQuery              ( const QList<int> &  boardgameId );
     ImageQuery *            imageQuery                  ( MediaObject_sp mediaObject );
 
  private:

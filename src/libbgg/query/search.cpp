@@ -1,5 +1,4 @@
-#include <QXmlSimpleReader>
-#include <QXmlInputSource>
+#include <QDomDocument>
 #include <QUrl>
 #include <QNetworkRequest>
 
@@ -63,17 +62,14 @@ void
 SearchQuery::on_search_query_finished()
 {
     if (m_reply->error() != QNetworkReply::NoError)
-    {
-        //parseError(QJsonDocument::fromJson(m_reply->readAll()).object());
-
+    {        
         qWarning() << "Network error. Error code is : " << m_reply->error();
     }
     else
     {
-        QXmlSimpleReader xmlReader;
-        QXmlInputSource *source = new QXmlInputSource( m_reply );
 
-        bool ok = xmlReader.parse(source);
+        QDomDocument doc;
+        bool ok = doc.setContent( m_reply );
 
         if (!ok)
         {
@@ -81,7 +77,38 @@ SearchQuery::on_search_query_finished()
         }
         else
         {
+            qDebug()<< "Parse OK";
+            /*
+             * Syntax is :
+             *
+            <boardgames termsofuse="http://boardgamegeek.com/xmlapi/termsofuse">
+                <boardgame objectid="30326">
+                    <name primary="true">
+                        Battleground: Crossbows & Catapults Tower Attack Expansion Pack
+                    </name>
+                    <yearpublished>2007</yearpublished>
+                </boardgame>
+                <boardgame objectid="30327">
+                    <name primary="true">
+                        Battleground: Crossbows & Catapults Twin Attack Armory Packs
+                    </name>
+                    <yearpublished>2007</yearpublished>
+                </boardgame>
+           </boardgames>
+            */
 
+            QDomNodeList boardgames = doc.elementsByTagName("boardgame");
+            for (int i = 0; i < boardgames.size(); i++)
+            {
+                QDomNode n = boardgames.item(i);
+
+                SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
+
+                if ( summary->load(n ) )
+                {
+                    m_results << summary;
+                }
+            }
         }
 
     }

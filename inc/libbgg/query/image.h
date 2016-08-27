@@ -26,26 +26,30 @@ class ImageQuery :
 {
     Q_OBJECT
 public:
-    explicit            ImageQuery             (BggApi & api , const QString &query );
+    explicit            ImageQuery             (BggApi & api , const MediaObject_sp object );
     virtual             ~ImageQuery            ();
 
 signals:
-    void                results                 ( Bgg::ImageQuery *);
+    void                result                 ( Bgg::ImageQuery *);
 
 private slots:
-    void                on_search_query_finished();
+    void                on_cover_query_finished();
+    void                on_thumbnail_query_finished();
 
 public :
-    const MediaObject_sp&       results         () const { return m_results; }
+
+    MediaObject_sp              result          () { return m_object ; }
+
     bool                        isRunning       () const;
     void                        abort           ();
 
 private :
 
     BggApi &                m_api;
-    QString                 m_query;
-    QNetworkReply *         m_reply;
-    MediaObject_sp          m_results;
+    MediaObject_sp          m_object;
+    QNetworkReply *         m_reply_cover;
+    QNetworkReply *         m_reply_thumbnail;
+
 };
 }
 

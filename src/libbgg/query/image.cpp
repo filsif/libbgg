@@ -10,30 +10,34 @@ namespace Bgg
 {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-// SearchQuery
+// ImageQuery  : queries the cover and thumbnail image for each BoardGame object
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-ImageQuery::ImageQuery(BggApi &api, const QString &query)
+ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
    : QObject(Q_NULLPTR)
   ,m_api( api )
-  ,m_query( query )
-  ,m_reply( Q_NULLPTR)
+  ,m_object( object )
+  ,m_reply_cover( Q_NULLPTR)
+   ,m_reply_thumbnail( Q_NULLPTR)
 {
-    QUrl url = api.baseUrl();
-    QString str;
 
-    str = "search?";
-    str += QString("search=%1").arg(query);
-    url = url.resolved( str );
 
-    qDebug() << "<SearchQuery::SearchQuery> url = " << url.toString();
+
 
     QNetworkRequest request;
-    request.setUrl(url);
-    m_reply = api.getReply( request );
-    connect ( m_reply , SIGNAL(finished()) , this , SLOT(on_search_query_finished()));
+
+    request.setUrl(  m_object->coverPath() );
+
+    m_reply_cover = api.getReply( request );
+    connect ( m_reply_cover , SIGNAL(finished()) , this , SLOT(on_cover_query_finished()));
+
+    QNetworkRequest request2;
+    request2.setUrl(  m_object->thumbnailPath() );
+
+    m_reply_thumbnail = api.getReply( request2 );
+    connect ( m_reply_thumbnail , SIGNAL(finished()) , this , SLOT(on_thumbnail_query_finished()));
 
 }
 
@@ -46,51 +50,80 @@ ImageQuery::~ImageQuery()
 bool
 ImageQuery::isRunning() const
 {
-    return (m_reply != NULL && m_reply->isRunning());
+    return ((m_reply_cover != NULL && m_reply_cover->isRunning()) || (m_reply_thumbnail != NULL && m_reply_thumbnail->isRunning()));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 void
 ImageQuery::abort()
 {
-    if (m_reply) {
-        m_reply->abort();
+    if (m_reply_cover) {
+        m_reply_cover->abort();
+    }
+
+    if (m_reply_thumbnail) {
+        m_reply_thumbnail->abort();
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-ImageQuery::on_search_query_finished()
+ImageQuery::on_cover_query_finished()
 {
-    if (m_reply->error() != QNetworkReply::NoError)
+    if (m_reply_cover->error() != QNetworkReply::NoError)
     {
-        //parseError(QJsonDocument::fromJson(m_reply->readAll()).object());
 
-        qWarning() << "Network error. Error code is : " << m_reply->error();
+        qWarning() << "Network error. Error code is : " << m_reply_cover->error();
     }
     else
-    {
-        QXmlSimpleReader xmlReader;
-        QXmlInputSource *source = new QXmlInputSource( m_reply );
-
-        bool ok = xmlReader.parse(source);
-
-        if (!ok)
+    {   QPixmap pixmap;
+        pixmap.loadFromData( m_reply_cover->readAll());
+        if (!pixmap.isNull())
         {
-            qDebug()<< "Parse failed " << m_reply->readAll();
+             m_object->setImage(Cover, pixmap);
+
+             qWarning() << "SET COVER";
         }
         else
         {
-
+            qWarning() << "cover is null";
         }
-
     }
 
+    emit result(this);
 
-    emit results(this);
+    m_reply_cover->deleteLater();
+    m_reply_cover = Q_NULLPTR;
+}
 
-    m_reply->deleteLater();
-    m_reply = Q_NULLPTR;
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+ImageQuery::on_thumbnail_query_finished()
+{
+    if (m_reply_thumbnail->error() != QNetworkReply::NoError)
+    {
+
+        qWarning() << "Network error. Error code is : " << m_reply_thumbnail->error();
+    }
+    else
+    {   QPixmap pixmap;
+        pixmap.loadFromData( m_reply_thumbnail->readAll());
+        if (!pixmap.isNull())
+        {
+            m_object->setImage(Thumbnail, pixmap);
+
+            qWarning() << "SET THUMBNAIL";
+        }
+        else
+        {
+            qWarning() << "thumbnail is null";
+        }
+    }
+
+    emit result(this);
+
+    m_reply_thumbnail->deleteLater();
+    m_reply_thumbnail = Q_NULLPTR;
 }
 
 
