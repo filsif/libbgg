@@ -253,6 +253,15 @@ BoardGameInfo::load(const QDomNode& result)
         m_coverPath     = "http:" + cover.text();
         m_thumbnailPath = "http:" + thumbnail.text();
 
+        QDomElement genres          = result.firstChildElement("boardgamecategory");
+
+
+        while ( !genres.isNull())
+        {
+            m_genres.append(genres.text());
+            genres = genres.nextSiblingElement("boardgamecategory");
+        }
+
         return true;
 
     }

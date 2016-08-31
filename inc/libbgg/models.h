@@ -239,6 +239,7 @@ private:
     int                 m_min_player;
     int                 m_max_player;
     int                 m_duration;
+    QList<QString>      m_genres;
 
 };
 
