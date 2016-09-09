@@ -228,7 +228,7 @@ public:
     int                 maxPlayer       () const;
     int                 duration        () const;
 
-
+    const QList<QString> & genres       () const;
 
 
 private:
@@ -294,6 +294,10 @@ inline int BoardGameInfo::duration() const
     return m_duration;
 }
 
+inline const QList<QString> & BoardGameInfo::genres() const
+{
+    return m_genres;
+}
 
 }
 

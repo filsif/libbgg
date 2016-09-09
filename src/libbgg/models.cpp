@@ -1,5 +1,6 @@
 #include <QDomNode>
 #include <libbgg/models.h>
+#include <QTextDocument>
 
 
 namespace Bgg
@@ -244,7 +245,13 @@ BoardGameInfo::load(const QDomNode& result)
 
         m_id            = bg.attribute("objectid").toInt();
         m_title         = name.text();
-        m_synopsis      = desc.text();
+
+        QTextDocument doc;
+        doc.setHtml( desc.text() );
+        m_synopsis      = doc.toPlainText(); // to remove HTML tags
+
+        m_synopsis.replace(QString(";"), QString(""));  // remove ';'
+
         m_year.setDate( yearpublished.text().toInt() , 1 , 1);
         m_min_age       = age.text().toInt();
         m_min_player    = minplayer.text().toInt();
