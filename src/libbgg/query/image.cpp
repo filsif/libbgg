@@ -21,6 +21,8 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
   ,m_object( object )
   ,m_reply_cover( Q_NULLPTR)
    ,m_reply_thumbnail( Q_NULLPTR)
+   ,m_cover_finished( false )
+   ,m_thumbnail_finished( false )
 {
 
 
@@ -70,6 +72,7 @@ ImageQuery::abort()
 void
 ImageQuery::on_cover_query_finished()
 {
+
     if (m_reply_cover->error() != QNetworkReply::NoError)
     {
 
@@ -81,8 +84,7 @@ ImageQuery::on_cover_query_finished()
         if (!pixmap.isNull())
         {
              m_object->setImage(Cover, pixmap);
-
-             qWarning() << "SET COVER";
+             m_cover_finished = true;
         }
         else
         {
@@ -90,7 +92,10 @@ ImageQuery::on_cover_query_finished()
         }
     }
 
-    emit result(this);
+    if ( m_cover_finished && m_thumbnail_finished )
+    {
+        emit result(this);
+    }
 
     m_reply_cover->deleteLater();
     m_reply_cover = Q_NULLPTR;
@@ -111,8 +116,7 @@ ImageQuery::on_thumbnail_query_finished()
         if (!pixmap.isNull())
         {
             m_object->setImage(Thumbnail, pixmap);
-
-            qWarning() << "SET THUMBNAIL";
+            m_thumbnail_finished = true;
         }
         else
         {
@@ -120,7 +124,10 @@ ImageQuery::on_thumbnail_query_finished()
         }
     }
 
-    emit result(this);
+    if ( m_cover_finished && m_thumbnail_finished )
+    {
+        emit result(this);
+    }
 
     m_reply_thumbnail->deleteLater();
     m_reply_thumbnail = Q_NULLPTR;

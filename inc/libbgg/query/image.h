@@ -50,6 +50,9 @@ private :
     QNetworkReply *         m_reply_cover;
     QNetworkReply *         m_reply_thumbnail;
 
+    bool                    m_cover_finished;
+    bool                    m_thumbnail_finished;
+
 };
 }
 
