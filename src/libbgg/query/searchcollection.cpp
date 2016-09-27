@@ -23,9 +23,19 @@ SearchCollectionQuery::SearchCollectionQuery(BggApi &api, const QString &query)
     QUrl url = api.baseUrl();
     QString str;
 
-    str = "collection/";
-    str += QString("%1").arg(query);
-    url = url.resolved( str );
+    if ( api.version() == BGG_V1 )
+    {
+        str = "collection/";
+        str += QString("%1").arg(query);
+        url = url.resolved( str );
+    }
+    else
+    {
+        str = "collection/version=1&username=";
+        str += QString("%1").arg(query);
+        url = url.resolved( str );
+
+    }
 
     qDebug() << "<SearchCollectionQuery::SearchCollectionQuery> url = " << url.toString();
 

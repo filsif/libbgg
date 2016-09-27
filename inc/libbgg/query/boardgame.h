@@ -6,6 +6,8 @@
 #include <QObject>
 #include <QNetworkReply>
 #include <QList>
+#include <QXmlSimpleReader>
+#include <QXmlInputSource>
 
 
 #include <libbgg/models.h>
@@ -42,6 +44,9 @@ public :
     void                        abort           ();
 
 private :
+
+    void                    Parse_XML_V1        ( QDomDocument &);
+    void                    Parse_XML_V2        ( QDomDocument &);
 
     BggApi &                m_api;
     QList<int>              m_bgid_list; // make own copy and not a reference

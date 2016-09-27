@@ -7,6 +7,8 @@
 #include <QDomDocument>
 #include <QDate>
 
+#include <libbgg/bgg.h>
+
 namespace Bgg
 {
 
@@ -150,7 +152,7 @@ public:
 
     int                         id                          ( ) const;
 
-    virtual bool                load                        (const QDomNode &);
+    virtual bool                load                        (XML_API_VERSION  , const QDomNode &);
 
 
 
@@ -181,7 +183,7 @@ public:
 
     int                         id                          ( ) const;
 
-    virtual bool                load                        (const QDomNode &);
+    virtual bool                load                        (XML_API_VERSION , const QDomNode &);
 
 
 
@@ -195,6 +197,39 @@ protected:
 typedef QSharedPointer<SearchCollectionSummary>   SearchCollectionSummary_sp;
 typedef QList<SearchCollectionSummary_sp>         SearchCollectionSummaryList_sp;
 
+
+
+class VersionInfo
+{
+public:
+    VersionInfo(){}
+    virtual ~VersionInfo(){}
+
+
+    bool            load( const QDomElement & );
+
+    int             versionId() const { return m_id;}
+
+    const QString&		title           () const { return m_title;}
+    const QString&		language        () const { return m_language;}
+    QDate               year            () const { return m_year;}
+    const QString&      coverPath       () const { return m_coverPath;}
+    const QString&      thumbnailPath   () const { return m_thumbnailPath;}
+
+
+private :
+
+    int             m_id;
+    QString         m_title;
+    QString			m_coverPath;
+    QString			m_thumbnailPath;
+    QPixmap         m_cover;
+    QPixmap         m_thumbnail;
+    QDate   		m_year;
+    QString         m_language;
+
+
+};
 
 
 /*!
@@ -217,7 +252,7 @@ public:
     *	\returns true if the infos could be read
     *	\returns false if the \a result object is empty
     */
-    bool                load            (const QDomNode&);
+    bool                load            ( XML_API_VERSION version , const QDomNode&);
 
     int                 boardgameId     () const { return id(); }
     const QString&		title           () const;
@@ -229,6 +264,7 @@ public:
     int                 duration        () const;
 
     const QList<QString> & genres       () const;
+    const QList<VersionInfo> & versions     () const;
 
 
 private:
@@ -240,6 +276,7 @@ private:
     int                 m_max_player;
     int                 m_duration;
     QList<QString>      m_genres;
+    QList<VersionInfo>  m_versions;
 
 };
 

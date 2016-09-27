@@ -40,6 +40,9 @@ public :
 
 private :
 
+    void                    Parse_XML_V1        ( QDomDocument &);
+    void                    Parse_XML_V2        ( QDomDocument &);
+
     BggApi &                    m_api;
     QString                     m_query;
     QNetworkReply *             m_reply;

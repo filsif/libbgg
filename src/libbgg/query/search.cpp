@@ -23,9 +23,20 @@ SearchQuery::SearchQuery(BggApi &api, const QString &query)
     QUrl url = api.baseUrl();
     QString str;
 
-    str = "search?";
-    str += QString("search=%1").arg(query);
-    url = url.resolved( str );
+    if ( api.version() == BGG_V1 )
+    {
+        str = "search?";
+        str += QString("search=%1").arg(query);
+        url = url.resolved( str );
+    }
+    else
+    {
+        str  = "search?type=boardgame";
+        //TODO replace space by +
+
+        str += QString("&query=%1").arg(query);
+        url = url.resolved( str );
+    }
 
     qDebug() << "<SearchQuery::SearchQuery> url = " << url.toString();
 
@@ -77,38 +88,15 @@ SearchQuery::on_search_query_finished()
         }
         else
         {
-            qDebug()<< "Parse OK";
-            /*
-             * Syntax is :
-             *
-            <boardgames termsofuse="http://boardgamegeek.com/xmlapi/termsofuse">
-                <boardgame objectid="30326">
-                    <name primary="true">
-                        Battleground: Crossbows & Catapults Tower Attack Expansion Pack
-                    </name>
-                    <yearpublished>2007</yearpublished>
-                </boardgame>
-                <boardgame objectid="30327">
-                    <name primary="true">
-                        Battleground: Crossbows & Catapults Twin Attack Armory Packs
-                    </name>
-                    <yearpublished>2007</yearpublished>
-                </boardgame>
-           </boardgames>
-            */
-
-            QDomNodeList boardgames = doc.elementsByTagName("boardgame");
-            for (int i = 0; i < boardgames.size(); i++)
+            if ( m_api.version() == BGG_V1 )
             {
-                QDomNode n = boardgames.item(i);
-
-                SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
-
-                if ( summary->load(n ) )
-                {
-                    m_results << summary;
-                }
+                Parse_XML_V1( doc );
             }
+            else
+            {
+                Parse_XML_V2( doc );
+            }
+
         }
 
     }
@@ -120,6 +108,73 @@ SearchQuery::on_search_query_finished()
     m_reply = Q_NULLPTR;
 }
 
+void
+SearchQuery::Parse_XML_V1(QDomDocument & doc)
+{
+    /*
+     * Syntax is :
+     *
+    <boardgames termsofuse="http://boardgamegeek.com/xmlapi/termsofuse">
+        <boardgame objectid="30326">
+            <name primary="true">
+                Battleground: Crossbows & Catapults Tower Attack Expansion Pack
+            </name>
+            <yearpublished>2007</yearpublished>
+        </boardgame>
+        <boardgame objectid="30327">
+            <name primary="true">
+                Battleground: Crossbows & Catapults Twin Attack Armory Packs
+            </name>
+            <yearpublished>2007</yearpublished>
+        </boardgame>
+   </boardgames>
+    */
 
+    QDomNodeList boardgames = doc.elementsByTagName("boardgame");
+    for (int i = 0; i < boardgames.size(); i++)
+    {
+        QDomNode n = boardgames.item(i);
+
+        SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
+
+        if ( summary->load(BGG_V1 , n ) )
+        {
+            m_results << summary;
+        }
+    }
+
+}
+
+void
+SearchQuery::Parse_XML_V2(QDomDocument & doc)
+{
+    /*
+     * Syntax is :
+     *
+    <items total="111" termsofuse="http://boardgamegeek.com/xmlapi/termsofuse">
+        <item type="boardgame" id="113924">
+            <name type="primary" value="Zombicide"/>
+            <yearpublished value="2012"/>
+        </item>
+        <item type="boardgame" id="139492">
+            <name type="primary" value="Zombicide Box of Dogs Set #6: Dog Companions"/>
+            <yearpublished value="2013"/>
+        </item>
+    </items>
+    */
+
+    QDomNodeList boardgames = doc.elementsByTagName("item");
+    for (int i = 0; i < boardgames.size(); i++)
+    {
+        QDomNode n = boardgames.item(i);
+
+        SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
+
+        if ( summary->load(BGG_V2 , n ) )
+        {
+            m_results << summary;
+        }
+    }
+}
 
 }

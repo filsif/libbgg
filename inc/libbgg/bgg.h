@@ -9,6 +9,13 @@ enum StatusCode
     StatusTooManyRequest
 };
 
+typedef enum
+{
+    BGG_V1,
+    BGG_V2
+
+}XML_API_VERSION;
+
 }
 
 

@@ -7,12 +7,20 @@
 namespace Bgg
 {
 
-BggApi::BggApi( QObject *parent)
+BggApi::BggApi( QObject *parent , XML_API_VERSION version)
  : QObject(parent)
+ ,m_version(version)
  ,m_mutex(Q_NULLPTR)
  ,m_qnam( Q_NULLPTR)
 {
-    m_baseUrl = "http://www.boardgamegeek.com/xmlapi/";
+    if ( m_version == BGG_V1 )
+    {
+        m_baseUrl = "http://www.boardgamegeek.com/xmlapi/";
+    }
+    else
+    {
+        m_baseUrl = "http://www.boardgamegeek.com/xmlapi2/";
+    }
     m_mutex = new QMutex;
     m_qnam = new QNetworkAccessManager(this);
 }
