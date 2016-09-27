@@ -43,7 +43,7 @@ class IBGGObject
 {
 public:
 
-    virtual bool    load                (const QDomNode&) = 0;
+    virtual bool    load                (XML_API_VERSION , const QDomNode&) = 0;
 };
 
 
@@ -76,7 +76,7 @@ public :
 
     static MediaObject_sp   null;
 
-    bool            load                (const QDomNode&);
+    bool            load                (XML_API_VERSION , const QDomNode&);
 
 
 
@@ -167,6 +167,37 @@ typedef QSharedPointer<SearchSummary>   SearchSummary_sp;
 typedef QList<SearchSummary_sp>         SearchSummaryList_sp;
 
 
+class VersionInfo
+        : public MediaObject
+{
+public:
+    VersionInfo(){}
+    virtual ~VersionInfo(){}
+
+
+    virtual bool        load(XML_API_VERSION ,  const QDomElement & );
+
+    int                 versionId() const { return m_id;}
+
+    const QString&		title           () const { return m_title;}
+    const QString&		language        () const { return m_language;}
+    QDate               year            () const { return m_year;}
+
+
+
+private :
+
+    int             m_id;
+    QString         m_title;
+    QDate   		m_year;
+    QString         m_language;
+
+
+};
+
+typedef QSharedPointer<VersionInfo>   VersionInfo_sp;
+typedef QList<VersionInfo_sp>         VersionInfoList_sp;
+
 /*!
 *	\class	SearchCollectionSummary
 *	\author	Frederic MAZUR
@@ -185,12 +216,15 @@ public:
 
     virtual bool                load                        (XML_API_VERSION , const QDomNode &);
 
+    const VersionInfoList_sp & versions     () const;
+
 
 
 protected:
 
 
     QString                     m_title;
+    VersionInfoList_sp          m_versions;
 };
 
 
@@ -199,37 +233,6 @@ typedef QList<SearchCollectionSummary_sp>         SearchCollectionSummaryList_sp
 
 
 
-class VersionInfo
-{
-public:
-    VersionInfo(){}
-    virtual ~VersionInfo(){}
-
-
-    bool            load( const QDomElement & );
-
-    int             versionId() const { return m_id;}
-
-    const QString&		title           () const { return m_title;}
-    const QString&		language        () const { return m_language;}
-    QDate               year            () const { return m_year;}
-    const QString&      coverPath       () const { return m_coverPath;}
-    const QString&      thumbnailPath   () const { return m_thumbnailPath;}
-
-
-private :
-
-    int             m_id;
-    QString         m_title;
-    QString			m_coverPath;
-    QString			m_thumbnailPath;
-    QPixmap         m_cover;
-    QPixmap         m_thumbnail;
-    QDate   		m_year;
-    QString         m_language;
-
-
-};
 
 
 /*!
@@ -264,7 +267,7 @@ public:
     int                 duration        () const;
 
     const QList<QString> & genres       () const;
-    const QList<VersionInfo> & versions     () const;
+    const VersionInfoList_sp & versions     () const;
 
 
 private:
@@ -276,7 +279,7 @@ private:
     int                 m_max_player;
     int                 m_duration;
     QList<QString>      m_genres;
-    QList<VersionInfo>  m_versions;
+    VersionInfoList_sp  m_versions;
 
 };
 

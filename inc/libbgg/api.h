@@ -50,7 +50,6 @@ public:
     QUrl                    m_baseUrl;
     QMutex *                m_mutex;
     QNetworkAccessManager * m_qnam;
-
     XML_API_VERSION         m_version;
 
 

@@ -54,7 +54,7 @@ MediaObject::~MediaObject()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 bool
-MediaObject::load(const QDomNode& result)
+MediaObject::load(XML_API_VERSION /*version*/ , const QDomNode& /*result*/)
 {
     return false;
 }
@@ -175,12 +175,15 @@ SearchCollectionSummary::load( XML_API_VERSION version ,const QDomNode & result)
 
             QDomElement name = result.firstChildElement("name");
             QDomElement yearpublished = result.firstChildElement("yearpublished");
+            QDomElement cover           = result.firstChildElement("image");
+            QDomElement thumbnail       = result.firstChildElement("thumbnail");
 
 
             m_id = bg.attribute("objectid").toInt();
             m_title = name.text();
 
-            //qWarning() << "name : " << m_title << " id : " << QString("%1").arg(m_id);
+            m_coverPath     = "http:" + cover.text();
+            m_thumbnailPath = "http:" + thumbnail.text();
 
             return true;
 
@@ -194,12 +197,34 @@ SearchCollectionSummary::load( XML_API_VERSION version ,const QDomNode & result)
 
             QDomElement name = result.firstChildElement("name");
             QDomElement yearpublished = result.firstChildElement("yearpublished");
-
+            QDomElement versions = result.firstChildElement("version"); // without s 'cause only one version for a game from a collection. Only V2 API
+            QDomElement cover           = result.firstChildElement("image");
+            QDomElement thumbnail       = result.firstChildElement("thumbnail");
 
             m_id = bg.attribute("id").toInt();
             m_title = name.attribute("value");
 
-            //qWarning() << "name : " << m_title << " id : " << QString("%1").arg(m_id);
+            m_coverPath     = "http:" + cover.text();
+            m_thumbnailPath = "http:" + thumbnail.text();
+
+            // create versions if exists
+            if ( !versions.isNull())
+            {
+                QDomElement version = versions.firstChildElement("item");
+                while ( !version.isNull())
+                {
+                    VersionInfo_sp info;
+
+
+
+                    if (info->load( BGG_V2 , version ))
+                    {
+                        m_versions << info;
+                    }
+
+                    version = versions.nextSiblingElement("item");
+                }
+            }
 
             return true;
 
@@ -437,17 +462,20 @@ BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
             }
 
             // create versions if exists
-            QDomElement version = versions.firstChildElement("item");
-            while ( !version.isNull())
+            if (  !versions.isNull())
             {
-                VersionInfo info;
-
-                if (info.load( version ))
+                QDomElement version = versions.firstChildElement("item");
+                while ( !version.isNull())
                 {
-                    m_versions << info;
-                }
+                    VersionInfo_sp info;
 
-                version = versions.nextSiblingElement("item");
+                    if (info->load( BGG_V2 , version ))
+                    {
+                        m_versions << info;
+                    }
+
+                    version = versions.nextSiblingElement("item");
+                }
             }
 
             return true;
@@ -461,12 +489,13 @@ BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
 
 
 bool
-VersionInfo::load( const QDomElement & elt)
+VersionInfo::load(XML_API_VERSION /*version*/ ,  const QDomElement & elt)
 {
     QDomElement name            = elt.firstChildElement("name");
     QDomElement yearpublished   = elt.firstChildElement("yearpublished");
     QDomElement cover           = elt.firstChildElement("image");
     QDomElement thumbnail       = elt.firstChildElement("thumbnail");
+    QDomElement language        = elt.firstChildElement("link");
     m_id                        = elt.attribute("id").toInt();
 
     while ( !name.isNull())
@@ -477,6 +506,14 @@ VersionInfo::load( const QDomElement & elt)
             break;
         }
         name = name.nextSiblingElement("name");
+    }
+
+    while ( !language.isNull())
+    {
+        if ( language.attribute("type").compare("language") == 0 )
+        {
+            m_language = language.attribute("value"); // only first language for the moment
+        }
     }
     m_year.setDate( yearpublished.attribute("value").toInt() , 1 , 1);
     m_coverPath     = "http:" + cover.text();

@@ -87,38 +87,16 @@ SearchCollectionQuery::on_search_collection_query_finished()
         }
         else
         {
-            qDebug()<< "Parse OK";
-            /*
-             * Syntax is :
-             *
-            <boardgames termsofuse="http://boardgamegeek.com/xmlapi/termsofuse">
-                <boardgame objectid="30326">
-                    <name primary="true">
-                        Battleground: Crossbows & Catapults Tower Attack Expansion Pack
-                    </name>
-                    <yearpublished>2007</yearpublished>
-                </boardgame>
-                <boardgame objectid="30327">
-                    <name primary="true">
-                        Battleground: Crossbows & Catapults Twin Attack Armory Packs
-                    </name>
-                    <yearpublished>2007</yearpublished>
-                </boardgame>
-           </boardgames>
-            */
-
-            QDomNodeList items = doc.elementsByTagName("item");
-            for (int i = 0; i < items.size(); i++)
+            if ( m_api.version() == BGG_V1 )
             {
-                QDomNode n = items.item(i);
-
-                SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
-
-                if ( collection_summary->load(n ) )
-                {
-                    m_results << collection_summary;
-                }
+                Parse_XML_V1( doc );
             }
+            else
+            {
+                Parse_XML_V2( doc );
+            }
+
+
         }
 
     }
@@ -129,6 +107,83 @@ SearchCollectionQuery::on_search_collection_query_finished()
     m_reply->deleteLater();
     m_reply = Q_NULLPTR;
 }
+
+void
+SearchCollectionQuery::Parse_XML_V1(QDomDocument & doc)
+{
+    /*
+     * Syntax is :
+     *
+    <boardgames termsofuse="http://boardgamegeek.com/xmlapi/termsofuse">
+        <boardgame objectid="30326">
+            <name primary="true">
+                Battleground: Crossbows & Catapults Tower Attack Expansion Pack
+            </name>
+            <yearpublished>2007</yearpublished>
+        </boardgame>
+        <boardgame objectid="30327">
+            <name primary="true">
+                Battleground: Crossbows & Catapults Twin Attack Armory Packs
+            </name>
+            <yearpublished>2007</yearpublished>
+        </boardgame>
+   </boardgames>
+    */
+
+    QDomNodeList items = doc.elementsByTagName("item");
+    for (int i = 0; i < items.size(); i++)
+    {
+        QDomNode n = items.item(i);
+
+        SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
+
+        if ( collection_summary->load( BGG_V1 , n ) )
+        {
+            m_results << collection_summary;
+        }
+    }
+
+}
+
+
+void
+SearchCollectionQuery::Parse_XML_V2(QDomDocument & doc)
+{
+    /* XML_API V2
+     * Syntax is :
+     *
+        <item objecttype="thing" objectid="113924" subtype="boardgame" collid="37132525">
+            <name sortindex="1">Zombicide</name>
+            <yearpublished>2013</yearpublished>
+            <image>//cf.geekdo-images.com/images/pic1876740.jpg</image>
+            <thumbnail>//cf.geekdo-images.com/images/pic1876740_t.jpg</thumbnail>
+            <version>
+                <item type="boardgameversion" id="219701">
+                    <thumbnail>//cf.geekdo-images.com/images/pic1876740_t.jpg</thumbnail>
+                    <image>//cf.geekdo-images.com/images/pic1876740.jpg</image>
+                    <name type="primary" sortindex="1" value="French second edition"/>
+                    <yearpublished value="2013"/>
+                    <link type="language" id="2187" value="French"/>
+                </item>
+            </version>
+        </item>
+    */
+
+    QDomNodeList items = doc.elementsByTagName("item");
+    for (int i = 0; i < items.size(); i++)
+    {
+        QDomNode n = items.item(i);
+
+        SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
+
+        if ( collection_summary->load( BGG_V2 , n ) )
+        {
+            m_results << collection_summary;
+        }
+    }
+}
+
+
 
 
 

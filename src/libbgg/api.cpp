@@ -9,9 +9,9 @@ namespace Bgg
 
 BggApi::BggApi( QObject *parent , XML_API_VERSION version)
  : QObject(parent)
- ,m_version(version)
  ,m_mutex(Q_NULLPTR)
  ,m_qnam( Q_NULLPTR)
+ ,m_version(version)
 {
     if ( m_version == BGG_V1 )
     {
