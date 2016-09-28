@@ -31,9 +31,11 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
     data.id = bg_info->id();
     data.versionid = -1;
     data.url = bg_info->coverPath();
+    qDebug() << "title : " << bg_info->title() <<" cover : " << data.url;
     data.type = Cover;
     m_queue.enqueue( data );
     data.url = bg_info->thumbnailPath();
+    qDebug() << "title : " << bg_info->title() <<" thumbnail : " << data.url;
     data.type = Thumbnail;
     m_queue.enqueue( data );
 

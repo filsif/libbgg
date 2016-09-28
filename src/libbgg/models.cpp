@@ -201,8 +201,8 @@ SearchCollectionSummary::load( XML_API_VERSION version ,const QDomNode & result)
             QDomElement cover           = result.firstChildElement("image");
             QDomElement thumbnail       = result.firstChildElement("thumbnail");
 
-            m_id = bg.attribute("id").toInt();
-            m_title = name.attribute("value");
+            m_id = bg.attribute("objectid").toInt();
+            m_title = name.text();
 
             m_coverPath     = "http:" + cover.text();
             m_thumbnailPath = "http:" + thumbnail.text();
@@ -213,7 +213,7 @@ SearchCollectionSummary::load( XML_API_VERSION version ,const QDomNode & result)
                 QDomElement version = versions.firstChildElement("item");
                 while ( !version.isNull())
                 {
-                    VersionInfo_sp info;
+                    VersionInfo_sp info = qSharedPointerCast<VersionInfo>( VersionInfo_sp( new VersionInfo()));
 
 
 
@@ -425,7 +425,7 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
             QDomElement thumbnail       = result.firstChildElement("thumbnail");
             QDomElement versions        = result.firstChildElement("versions");
 
-            m_id            = bg.attribute("objectid").toInt();
+            m_id            = bg.attribute("id").toInt();
 
             if ( with_version ) // bof bof , peux pas faire mieux pour le moment
             {
@@ -441,7 +441,7 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
 
             while ( !name.isNull())
             {
-                if ( name.attribute("primary").compare("true") == 0)
+                if ( name.attribute("type").compare("primary") == 0)
                 {
                     m_title         = name.attribute("value");
                     break;
@@ -465,13 +465,16 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
             m_coverPath     = "http:" + cover.text();
             m_thumbnailPath = "http:" + thumbnail.text();
 
-            QDomElement genres          = result.firstChildElement("boardgamecategory");
+            QDomElement genres          = result.firstChildElement("link");
 
 
             while ( !genres.isNull())
             {
-                m_genres.append(genres.attribute("value"));
-                genres = genres.nextSiblingElement("boardgamecategory");
+                if ( genres.attribute("type").compare("boardgamecategory") == 0)
+                {
+                    m_genres.append(genres.attribute("value"));
+                }
+                genres = genres.nextSiblingElement("link");
             }
 
             // create versions if exists
@@ -480,7 +483,7 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
                 QDomElement version = versions.firstChildElement("item");
                 while ( !version.isNull())
                 {
-                    VersionInfo_sp info;
+                    VersionInfo_sp info = qSharedPointerCast<VersionInfo>( VersionInfo_sp( new VersionInfo()));
 
                     if (info->load( BGG_V2 , version ))
                     {
@@ -496,7 +499,7 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
                         }
                     }
 
-                    version = versions.nextSiblingElement("item");
+                    version = version.nextSiblingElement("item");
                 }
             }
 
@@ -552,6 +555,7 @@ VersionInfo::load(XML_API_VERSION /*version*/ ,  const QDomElement & elt)
         {
             m_language = language.attribute("value"); // only first language for the moment
         }
+        language = language.nextSiblingElement("link");
     }
     m_year.setDate( yearpublished.attribute("value").toInt() , 1 , 1);
     m_coverPath     = "http:" + cover.text();

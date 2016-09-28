@@ -250,6 +250,7 @@ BoardGameQuery::Parse_XML_V2(QDomDocument & doc)
     */
 
     QDomNodeList boardgames = doc.elementsByTagName("item");
+
     for (int i = 0; i < boardgames.size(); i++)
     {
         QDomNode n = boardgames.item(i);
@@ -257,6 +258,7 @@ BoardGameQuery::Parse_XML_V2(QDomDocument & doc)
         BoardGameInfo_sp bg_info= qSharedPointerCast<BoardGameInfo>( BoardGameInfo_sp( new BoardGameInfo()));
         if ( bg_info->load_version( BGG_V2 , n , m_with_versions , m_bgid_list ) )
         {
+            qDebug() << "game : " << bg_info->title();
             m_results << bg_info;
         }
     }
