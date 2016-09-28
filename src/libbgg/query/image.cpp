@@ -18,28 +18,47 @@ namespace Bgg
 ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
    : QObject(Q_NULLPTR)
   ,m_api( api )
-  ,m_object( object )
-  ,m_reply_cover( Q_NULLPTR)
-   ,m_reply_thumbnail( Q_NULLPTR)
-   ,m_cover_finished( false )
-   ,m_thumbnail_finished( false )
+  ,m_object( object )  
 {
 
+    BoardGameInfo_sp bg_info = qSharedPointerCast<BoardGameInfo>(  m_object );
 
 
+    // Create queue of image to download
+
+    ImageData data;
+    data.reply = Q_NULLPTR;
+    data.id = bg_info->id();
+    data.versionid = -1;
+    data.url = bg_info->coverPath();
+    data.type = Cover;
+    m_queue.enqueue( data );
+    data.url = bg_info->thumbnailPath();
+    data.type = Thumbnail;
+    m_queue.enqueue( data );
+
+    const VersionInfoList_sp & versions = bg_info->versions();
+    foreach( VersionInfo_sp version , versions)
+    {
+        data.versionid = version->versionId();
+        data.url = version->coverPath();
+        data.type = Cover;
+        m_queue.enqueue( data );
+        data.url = version->thumbnailPath();
+        data.type = Thumbnail;
+        m_queue.enqueue( data );
+    }
+
+    // dequeue
+
+    ImageData &head_data = m_queue.head(); // we suppose that the queue is not empty at this time
 
     QNetworkRequest request;
 
-    request.setUrl(  m_object->coverPath() );
+    request.setUrl(  head_data.url );
 
-    m_reply_cover = api.getReply( request );
-    connect ( m_reply_cover , SIGNAL(finished()) , this , SLOT(on_cover_query_finished()));
-
-    QNetworkRequest request2;
-    request2.setUrl(  m_object->thumbnailPath() );
-
-    m_reply_thumbnail = api.getReply( request2 );
-    connect ( m_reply_thumbnail , SIGNAL(finished()) , this , SLOT(on_thumbnail_query_finished()));
+    head_data.reply = m_api.getReply( request );
+    connect ( head_data.reply , SIGNAL(finished()) , this , SLOT(on_image_query_finished()));
 
 }
 
@@ -52,86 +71,86 @@ ImageQuery::~ImageQuery()
 bool
 ImageQuery::isRunning() const
 {
-    return ((m_reply_cover != NULL && m_reply_cover->isRunning()) || (m_reply_thumbnail != NULL && m_reply_thumbnail->isRunning()));
+    return ((m_reply != NULL && m_reply->isRunning()) );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 void
 ImageQuery::abort()
 {
-    if (m_reply_cover) {
-        m_reply_cover->abort();
+    if (m_reply) {
+        m_reply->abort();
     }
 
-    if (m_reply_thumbnail) {
-        m_reply_thumbnail->abort();
-    }
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-ImageQuery::on_cover_query_finished()
+ImageQuery::on_image_query_finished()
 {
+    ImageData out_data;
+    out_data = m_queue.dequeue();
 
-    if (m_reply_cover->error() != QNetworkReply::NoError)
+    if (out_data.reply->error() != QNetworkReply::NoError)
     {
 
-        qWarning() << "Network error. Error code is : " << m_reply_cover->error();
+        qWarning() << "Network error. Error code is : " << out_data.reply->error();
     }
     else
-    {   QPixmap pixmap;
-        pixmap.loadFromData( m_reply_cover->readAll());
+    {
+
+
+        QPixmap pixmap;
+        pixmap.loadFromData( out_data.reply->readAll());
         if (!pixmap.isNull())
         {
-             m_object->setImage(Cover, pixmap);
-             m_cover_finished = true;
+            if ( out_data.versionid == -1 )
+            {
+                 m_object->setImage(out_data.type, pixmap);
+            }
+            else
+            {
+                BoardGameInfo_sp bg_info = qSharedPointerCast<BoardGameInfo>(  m_object );
+                const VersionInfoList_sp & versions = bg_info->versions();
+                foreach( VersionInfo_sp version , versions)
+                {
+                    if ( version->versionId() == out_data.versionid )
+                    {
+                        version->setImage( out_data.type , pixmap );
+                    }
+                }
+            }
+
         }
         else
         {
             qWarning() << "cover is null";
         }
-    }
 
-    if ( m_cover_finished && m_thumbnail_finished )
-    {
-        emit result(this);
-    }
-
-    m_reply_cover->deleteLater();
-    m_reply_cover = Q_NULLPTR;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-void
-ImageQuery::on_thumbnail_query_finished()
-{
-    if (m_reply_thumbnail->error() != QNetworkReply::NoError)
-    {
-
-        qWarning() << "Network error. Error code is : " << m_reply_thumbnail->error();
-    }
-    else
-    {   QPixmap pixmap;
-        pixmap.loadFromData( m_reply_thumbnail->readAll());
-        if (!pixmap.isNull())
+        if ( m_queue.isEmpty())
         {
-            m_object->setImage(Thumbnail, pixmap);
-            m_thumbnail_finished = true;
+            emit result(this); //  emit when all the images have been downloaded
         }
         else
         {
-            qWarning() << "thumbnail is null";
+            // next queue element
+            ImageData &head_data = m_queue.head(); // we suppose that the queue is not empty at this time
+            QNetworkRequest request;
+            request.setUrl(  head_data.url );
+            head_data.reply = m_api.getReply( request );
+
+            connect ( head_data.reply , SIGNAL(finished()) , this , SLOT(on_image_query_finished()));
+
         }
     }
 
-    if ( m_cover_finished && m_thumbnail_finished )
-    {
-        emit result(this);
-    }
 
-    m_reply_thumbnail->deleteLater();
-    m_reply_thumbnail = Q_NULLPTR;
+    out_data.reply->deleteLater();
+    out_data.reply = Q_NULLPTR;
 }
+
+
 
 
 

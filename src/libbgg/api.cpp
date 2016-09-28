@@ -55,9 +55,9 @@ BggApi::searchCollectionQuery( const QString & title )
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 BoardGameQuery *
-BggApi::boardgameQuery( const QList<int> & boardgameId_list )
+BggApi::boardgameQuery( const search_coll_infosList & boardgameId_list , bool with_version )
 {
-    return new BoardGameQuery( *this , boardgameId_list );
+    return new BoardGameQuery( *this , boardgameId_list, with_version );
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 ImageQuery *

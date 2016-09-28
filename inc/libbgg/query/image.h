@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QNetworkReply>
+#include <QQueue>
 
 
 #include <libbgg/models.h>
@@ -33,8 +34,7 @@ signals:
     void                result                 ( Bgg::ImageQuery *);
 
 private slots:
-    void                on_cover_query_finished();
-    void                on_thumbnail_query_finished();
+    void                on_image_query_finished();
 
 public :
 
@@ -47,11 +47,19 @@ private :
 
     BggApi &                m_api;
     MediaObject_sp          m_object;
-    QNetworkReply *         m_reply_cover;
-    QNetworkReply *         m_reply_thumbnail;
+    QNetworkReply *         m_reply;// not used
 
-    bool                    m_cover_finished;
-    bool                    m_thumbnail_finished;
+    typedef struct
+    {
+        int                 id;
+        int                 versionid;
+        ImageType           type;
+        QUrl                url;
+        QNetworkReply *     reply;
+
+    }ImageData;
+
+    QQueue< ImageData>      m_queue;
 
 };
 }

@@ -16,6 +16,17 @@ typedef enum
 
 }XML_API_VERSION;
 
+class search_coll_infos{
+public :
+    search_coll_infos() : id(-1),version_id(-1){}
+    virtual ~search_coll_infos() { }
+    int id;
+    int version_id; // -1 if not exists
+
+};
+
+typedef QList<search_coll_infos> search_coll_infosList;
+
 }
 
 

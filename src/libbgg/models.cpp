@@ -258,12 +258,11 @@ BoardGameInfo::~BoardGameInfo()
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
 bool
-BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
+BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& result, bool with_version , search_coll_infosList & list)
 {
-
-    if ( version == BGG_V1 )
+    int version_id = -1;
+    if ( api_version == BGG_V1 )
     {
         /* XML_API_V1
                         <boardgame objectid="30327">
@@ -317,6 +316,8 @@ BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
             QDomElement thumbnail       = result.firstChildElement("thumbnail");
 
             m_id            = bg.attribute("objectid").toInt();
+
+
 
             while ( !name.isNull())
             {
@@ -426,6 +427,18 @@ BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
 
             m_id            = bg.attribute("objectid").toInt();
 
+            if ( with_version ) // bof bof , peux pas faire mieux pour le moment
+            {
+                foreach( search_coll_infos ifos,  list )
+                {
+                    if ( ifos.id == m_id )
+                    {
+                        version_id = ifos.version_id;
+                        break;
+                    }
+                }
+            }
+
             while ( !name.isNull())
             {
                 if ( name.attribute("primary").compare("true") == 0)
@@ -471,7 +484,16 @@ BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
 
                     if (info->load( BGG_V2 , version ))
                     {
-                        m_versions << info;
+                        // oblige de parser avant :-( :-(
+
+                        /*
+                         * astuce pour ne garder que la version nécessaire si besoin
+                         * sur une collection uniquement, sur une recherche il faut garder toutes les versions pour les proposer
+                         */
+                        if ( info->versionId() == version_id && with_version )
+                        {
+                            m_versions << info;
+                        }
                     }
 
                     version = versions.nextSiblingElement("item");
@@ -483,6 +505,22 @@ BoardGameInfo::load( XML_API_VERSION version , const QDomNode& result)
         }
 
     }
+
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/// \brief BoardGameInfo::load
+/// \param version
+/// \param result
+/// \return
+///
+///
+bool
+BoardGameInfo::load( XML_API_VERSION /*version*/ , const QDomNode&/* result*/)
+{
+
+    // don't use here
 
     return false;
 }

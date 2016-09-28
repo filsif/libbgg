@@ -29,7 +29,7 @@ class BoardGameQuery :
 {
     Q_OBJECT
 public:
-    explicit            BoardGameQuery             (BggApi & api ,  const QList<int> &  bgid_list );
+    explicit            BoardGameQuery             (BggApi & api , const search_coll_infosList &  bgid_list , bool with_version );
     virtual             ~BoardGameQuery            ();
 
 signals:
@@ -49,9 +49,10 @@ private :
     void                    Parse_XML_V2        ( QDomDocument &);
 
     BggApi &                m_api;
-    QList<int>              m_bgid_list; // make own copy and not a reference
+    search_coll_infosList   m_bgid_list; // make own copy and not a reference
     QNetworkReply *         m_reply;
     MediaObjectList_sp      m_results;
+    bool                    m_with_versions; // if true , search all versions, if false , search only version_id if exists
 };
 }
 

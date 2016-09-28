@@ -14,11 +14,12 @@ namespace Bgg
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-BoardGameQuery::BoardGameQuery(BggApi &api, const QList<int> & bgid_list )
+BoardGameQuery::BoardGameQuery(BggApi &api, const search_coll_infosList & bgid_list ,bool with_versions )
    : QObject(Q_NULLPTR)
   ,m_api( api )
   ,m_bgid_list( bgid_list )
   ,m_reply( Q_NULLPTR)
+  ,m_with_versions(with_versions)
 {
     QUrl url = api.baseUrl();
     QString str;
@@ -36,11 +37,11 @@ BoardGameQuery::BoardGameQuery(BggApi &api, const QList<int> & bgid_list )
     {
         if  ( i == m_bgid_list.count() - 1 )
         {
-            str += QString("%1").arg(m_bgid_list[i]);
+            str += QString("%1").arg(m_bgid_list[i].id);
         }
         else
         {
-            str += QString("%1,").arg(m_bgid_list[i]);
+            str += QString("%1,").arg(m_bgid_list[i].id);
         }
     }
 
@@ -254,7 +255,7 @@ BoardGameQuery::Parse_XML_V2(QDomDocument & doc)
         QDomNode n = boardgames.item(i);
 
         BoardGameInfo_sp bg_info= qSharedPointerCast<BoardGameInfo>( BoardGameInfo_sp( new BoardGameInfo()));
-        if ( bg_info->load( BGG_V2 , n ) )
+        if ( bg_info->load_version( BGG_V2 , n , m_with_versions , m_bgid_list ) )
         {
             m_results << bg_info;
         }

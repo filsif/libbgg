@@ -216,7 +216,7 @@ public:
 
     virtual bool                load                        (XML_API_VERSION , const QDomNode &);
 
-    const VersionInfoList_sp & versions     () const;
+    inline const VersionInfoList_sp & versions     () const { return m_versions; }
 
 
 
@@ -255,7 +255,8 @@ public:
     *	\returns true if the infos could be read
     *	\returns false if the \a result object is empty
     */
-    bool                load            ( XML_API_VERSION version , const QDomNode&);
+    bool                load            ( XML_API_VERSION api_version , const QDomNode&);
+    bool                load_version    ( XML_API_VERSION api_version , const QDomNode& , bool with_version , search_coll_infosList & list);
 
     int                 boardgameId     () const { return id(); }
     const QString&		title           () const;
@@ -267,7 +268,7 @@ public:
     int                 duration        () const;
 
     const QList<QString> & genres       () const;
-    const VersionInfoList_sp & versions     () const;
+    inline const VersionInfoList_sp & versions     () const { return m_versions; }
 
 
 private:
@@ -280,6 +281,7 @@ private:
     int                 m_duration;
     QList<QString>      m_genres;
     VersionInfoList_sp  m_versions;
+
 
 };
 

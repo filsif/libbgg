@@ -42,7 +42,7 @@ public:
 
     SearchQuery *           searchQuery                 ( const QString& title );
     SearchCollectionQuery * searchCollectionQuery       ( const QString& title );
-    BoardGameQuery *        boardgameQuery              ( const QList<int> &  boardgameId );
+    BoardGameQuery *        boardgameQuery              ( const search_coll_infosList &  boardgameId , bool with_version );
     ImageQuery *            imageQuery                  ( MediaObject_sp mediaObject );
 
  private:
