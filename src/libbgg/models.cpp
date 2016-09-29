@@ -1,7 +1,6 @@
-#include <QDomNode>
 #include <libbgg/models.h>
 #include <QTextDocument>
-
+#include <QDebug>
 
 namespace Bgg
 {
@@ -54,7 +53,7 @@ MediaObject::~MediaObject()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 bool
-MediaObject::load(XML_API_VERSION /*version*/ , const QDomNode& /*result*/)
+MediaObject::load(XML_API_VERSION /*version*/ , const QDomElement& /*result*/)
 {
     return false;
 }
@@ -106,47 +105,28 @@ SearchSummary::SearchSummary()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 bool
-SearchSummary::load(XML_API_VERSION version , const QDomNode & result)
+SearchSummary::load(XML_API_VERSION version , const QDomElement & result)
 {
 
     if ( version == BGG_V1 )
     {
-        if ( result.isElement())
-        {
-            QDomElement bg = result.toElement();
+        QDomElement name = result.firstChildElement("name");
+        QDomElement yearpublished = result.firstChildElement("yearpublished");
 
-            QDomElement name = result.firstChildElement("name");
-            QDomElement yearpublished = result.firstChildElement("yearpublished");
+        m_id = result.attribute("objectid").toInt();
+        m_title = name.text();
 
-
-            m_id = bg.attribute("objectid").toInt();
-            m_title = name.text();
-
-            //qWarning() << "name : " << m_title << " id : " << QString("%1").arg(m_id);
-
-            return true;
-
-        }
+        return true;
     }
     else
     {
-        if ( result.isElement())
-        {
-            QDomElement bg = result.toElement();
+        QDomElement name = result.firstChildElement("name");
+        QDomElement yearpublished = result.firstChildElement("yearpublished");
 
-            QDomElement name = result.firstChildElement("name");
-            QDomElement yearpublished = result.firstChildElement("yearpublished");
+        m_id = result.attribute("id").toInt();
+        m_title = name.attribute("value");
 
-
-            m_id = bg.attribute("id").toInt();
-            m_title = name.attribute("value");
-
-            //qWarning() << "name : " << m_title << " id : " << QString("%1").arg(m_id);
-
-            return true;
-
-        }
-
+        return true;
     }
 
     return false;
@@ -164,71 +144,51 @@ SearchCollectionSummary::SearchCollectionSummary()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 bool
-SearchCollectionSummary::load( XML_API_VERSION version ,const QDomNode & result)
+SearchCollectionSummary::load( XML_API_VERSION version ,const QDomElement & result)
 {
     if ( version == BGG_V1 )
     {
+        QDomElement name            = result.firstChildElement("name");
+        QDomElement yearpublished   = result.firstChildElement("yearpublished");
+        QDomElement cover           = result.firstChildElement("image");
+        QDomElement thumbnail       = result.firstChildElement("thumbnail");
 
-        if ( result.isElement())
-        {
-            QDomElement bg = result.toElement();
+        m_id                        = result.attribute("objectid").toInt();
+        m_title                     = name.text();
+        m_coverPath                 = "http:" + cover.text();
+        m_thumbnailPath             = "http:" + thumbnail.text();
 
-            QDomElement name = result.firstChildElement("name");
-            QDomElement yearpublished = result.firstChildElement("yearpublished");
-            QDomElement cover           = result.firstChildElement("image");
-            QDomElement thumbnail       = result.firstChildElement("thumbnail");
-
-
-            m_id = bg.attribute("objectid").toInt();
-            m_title = name.text();
-
-            m_coverPath     = "http:" + cover.text();
-            m_thumbnailPath = "http:" + thumbnail.text();
-
-            return true;
-
-        }
+        return true;
     }
     else
     {
-        if ( result.isElement())
+        QDomElement name            = result.firstChildElement("name");
+        QDomElement yearpublished   = result.firstChildElement("yearpublished");
+        QDomElement versions        = result.firstChildElement("version"); // without s 'cause only one version for a game from a collection. Only V2 API
+        QDomElement cover           = result.firstChildElement("image");
+        QDomElement thumbnail       = result.firstChildElement("thumbnail");
+
+        m_id                        = result.attribute("objectid").toInt();
+        m_title                     = name.text();
+        m_coverPath                 = "http:" + cover.text();
+        m_thumbnailPath             = "http:" + thumbnail.text();
+
+        // create versions if exists
+        if ( !versions.isNull())
         {
-            QDomElement bg = result.toElement();
-
-            QDomElement name = result.firstChildElement("name");
-            QDomElement yearpublished = result.firstChildElement("yearpublished");
-            QDomElement versions = result.firstChildElement("version"); // without s 'cause only one version for a game from a collection. Only V2 API
-            QDomElement cover           = result.firstChildElement("image");
-            QDomElement thumbnail       = result.firstChildElement("thumbnail");
-
-            m_id = bg.attribute("objectid").toInt();
-            m_title = name.text();
-
-            m_coverPath     = "http:" + cover.text();
-            m_thumbnailPath = "http:" + thumbnail.text();
-
-            // create versions if exists
-            if ( !versions.isNull())
+            QDomElement version = versions.firstChildElement("item");
+            while ( !version.isNull())
             {
-                QDomElement version = versions.firstChildElement("item");
-                while ( !version.isNull())
+                VersionInfo_sp info = qSharedPointerCast<VersionInfo>( VersionInfo_sp( new VersionInfo()));
+
+                if (info->load( BGG_V2 , version ))
                 {
-                    VersionInfo_sp info = qSharedPointerCast<VersionInfo>( VersionInfo_sp( new VersionInfo()));
-
-
-
-                    if (info->load( BGG_V2 , version ))
-                    {
-                        m_versions << info;
-                    }
-
-                    version = versions.nextSiblingElement("item");
+                    m_versions << info;
                 }
+                version = versions.nextSiblingElement("item");
             }
-
-            return true;
-
         }
+        return true;
     }
 
     return false;
@@ -259,7 +219,7 @@ BoardGameInfo::~BoardGameInfo()
 
 
 bool
-BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& result, bool with_version , search_coll_infosList & list)
+BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomElement& result, bool with_version , search_coll_infosList & list)
 {
     int version_id = -1;
     if ( api_version == BGG_V1 )
@@ -299,65 +259,54 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
                         </boardgame>
     */
 
+        QDomElement name            = result.firstChildElement("name");
+        QDomElement desc            = result.firstChildElement("description");
+        QDomElement yearpublished   = result.firstChildElement("yearpublished");
+        QDomElement minplayer       = result.firstChildElement("minplayers");
+        QDomElement maxplayer       = result.firstChildElement("maxplayers");
+        QDomElement age             = result.firstChildElement("age");
+        QDomElement playingtime     = result.firstChildElement("playingtime");
+        QDomElement cover           = result.firstChildElement("image");
+        QDomElement thumbnail       = result.firstChildElement("thumbnail");
 
+        m_id                        = result.attribute("objectid").toInt();
 
-        if ( result.isElement())
+        while ( !name.isNull())
         {
-            QDomElement bg              = result.toElement();
 
-            QDomElement name            = result.firstChildElement("name");
-            QDomElement desc            = result.firstChildElement("description");
-            QDomElement yearpublished   = result.firstChildElement("yearpublished");
-            QDomElement minplayer       = result.firstChildElement("minplayers");
-            QDomElement maxplayer       = result.firstChildElement("maxplayers");
-            QDomElement age             = result.firstChildElement("age");
-            QDomElement playingtime     = result.firstChildElement("playingtime");
-            QDomElement cover           = result.firstChildElement("image");
-            QDomElement thumbnail       = result.firstChildElement("thumbnail");
-
-            m_id            = bg.attribute("objectid").toInt();
-
-
-
-            while ( !name.isNull())
+            if ( name.attribute("primary").compare("true") == 0)
             {
-
-                if ( name.attribute("primary").compare("true") == 0)
-                {
-                    m_title         = name.text();
-                    break;
-                }
-                name = name.nextSiblingElement("name");
+                m_title         = name.text();
+                break;
             }
-
-
-
-            QTextDocument doc;
-            doc.setHtml( desc.text() );
-            m_synopsis      = doc.toPlainText(); // to remove HTML tags
-
-            m_synopsis.replace(QString(";"), QString(""));  // remove ';'
-
-            m_year.setDate( yearpublished.text().toInt() , 1 , 1);
-            m_min_age       = age.text().toInt();
-            m_min_player    = minplayer.text().toInt();
-            m_max_player    = maxplayer.text().toInt();
-            m_duration      = playingtime.text().toInt();
-            m_coverPath     = "http:" + cover.text();
-            m_thumbnailPath = "http:" + thumbnail.text();
-
-            QDomElement genres          = result.firstChildElement("boardgamecategory");
-
-
-            while ( !genres.isNull())
-            {
-                m_genres.append(genres.text());
-                genres = genres.nextSiblingElement("boardgamecategory");
-            }
-
-            return true;
-
+            name = name.nextSiblingElement("name");
         }
+
+
+
+        QTextDocument doc;
+        doc.setHtml( desc.text() );
+        m_synopsis      = doc.toPlainText(); // to remove HTML tags
+        m_synopsis.replace(QString(";"), QString(""));  // remove ';'
+        m_year.setDate( yearpublished.text().toInt() , 1 , 1);
+        m_min_age       = age.text().toInt();
+        m_min_player    = minplayer.text().toInt();
+        m_max_player    = maxplayer.text().toInt();
+        m_duration      = playingtime.text().toInt();
+        m_coverPath     = "http:" + cover.text();
+        m_thumbnailPath = "http:" + thumbnail.text();
+
+        QDomElement genres          = result.firstChildElement("boardgamecategory");
+
+        while ( !genres.isNull())
+        {
+            m_genres.append(genres.text());
+            genres = genres.nextSiblingElement("boardgamecategory");
+        }
+
+        return true;
+
+
     }
     else
     {
@@ -407,105 +356,96 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
                 </versions>
             </item>
     */
+        QDomElement name            = result.firstChildElement("name");
+        QDomElement desc            = result.firstChildElement("description");
+        QDomElement yearpublished   = result.firstChildElement("yearpublished");
+        QDomElement minplayer       = result.firstChildElement("minplayers");
+        QDomElement maxplayer       = result.firstChildElement("maxplayers");
+        QDomElement age             = result.firstChildElement("age");
+        QDomElement playingtime     = result.firstChildElement("playingtime");
+        QDomElement cover           = result.firstChildElement("image");
+        QDomElement thumbnail       = result.firstChildElement("thumbnail");
+        QDomElement versions        = result.firstChildElement("versions");
 
+        m_id                        = result.attribute("id").toInt();
 
-
-        if ( result.isElement())
+        if ( with_version ) // bof bof , peux pas faire mieux pour le moment
         {
-            QDomElement bg              = result.toElement();
-
-            QDomElement name            = result.firstChildElement("name");
-            QDomElement desc            = result.firstChildElement("description");
-            QDomElement yearpublished   = result.firstChildElement("yearpublished");
-            QDomElement minplayer       = result.firstChildElement("minplayers");
-            QDomElement maxplayer       = result.firstChildElement("maxplayers");
-            QDomElement age             = result.firstChildElement("age");
-            QDomElement playingtime     = result.firstChildElement("playingtime");
-            QDomElement cover           = result.firstChildElement("image");
-            QDomElement thumbnail       = result.firstChildElement("thumbnail");
-            QDomElement versions        = result.firstChildElement("versions");
-
-            m_id            = bg.attribute("id").toInt();
-
-            if ( with_version ) // bof bof , peux pas faire mieux pour le moment
+            foreach( search_coll_infos ifos,  list )
             {
-                foreach( search_coll_infos ifos,  list )
+                if ( ifos.id == m_id )
                 {
-                    if ( ifos.id == m_id )
-                    {
-                        version_id = ifos.version_id;
-                        break;
-                    }
-                }
-            }
-
-            while ( !name.isNull())
-            {
-                if ( name.attribute("type").compare("primary") == 0)
-                {
-                    m_title         = name.attribute("value");
+                    version_id = ifos.version_id;
                     break;
                 }
-                name = name.nextSiblingElement("name");
             }
-
-
-
-            QTextDocument doc;
-            doc.setHtml( desc.text() );
-            m_synopsis      = doc.toPlainText(); // to remove HTML tags
-
-            m_synopsis.replace(QString(";"), QString(""));  // remove ';'
-
-            m_year.setDate( yearpublished.attribute("value").toInt() , 1 , 1);
-            m_min_age       = age.attribute("value").toInt();
-            m_min_player    = minplayer.attribute("value").toInt();
-            m_max_player    = maxplayer.attribute("value").toInt();
-            m_duration      = playingtime.attribute("value").toInt();
-            m_coverPath     = "http:" + cover.text();
-            m_thumbnailPath = "http:" + thumbnail.text();
-
-            QDomElement genres          = result.firstChildElement("link");
-
-
-            while ( !genres.isNull())
-            {
-                if ( genres.attribute("type").compare("boardgamecategory") == 0)
-                {
-                    m_genres.append(genres.attribute("value"));
-                }
-                genres = genres.nextSiblingElement("link");
-            }
-
-            // create versions if exists
-            if (  !versions.isNull())
-            {
-                QDomElement version = versions.firstChildElement("item");
-                while ( !version.isNull())
-                {
-                    VersionInfo_sp info = qSharedPointerCast<VersionInfo>( VersionInfo_sp( new VersionInfo()));
-
-                    if (info->load( BGG_V2 , version ))
-                    {
-                        // oblige de parser avant :-( :-(
-
-                        /*
-                         * astuce pour ne garder que la version nécessaire si besoin
-                         * sur une collection uniquement, sur une recherche il faut garder toutes les versions pour les proposer
-                         */
-                        if ( info->versionId() == version_id && with_version )
-                        {
-                            m_versions << info;
-                        }
-                    }
-
-                    version = version.nextSiblingElement("item");
-                }
-            }
-
-            return true;
-
         }
+
+        while ( !name.isNull())
+        {
+            if ( name.attribute("type").compare("primary") == 0)
+            {
+                m_title         = name.attribute("value");
+                break;
+            }
+            name = name.nextSiblingElement("name");
+        }
+
+
+
+        QTextDocument doc;
+        doc.setHtml( desc.text() );
+        m_synopsis      = doc.toPlainText(); // to remove HTML tags
+        m_synopsis.replace(QString(";"), QString(""));  // remove ';'
+        m_year.setDate( yearpublished.attribute("value").toInt() , 1 , 1);
+        m_min_age       = age.attribute("value").toInt();
+        m_min_player    = minplayer.attribute("value").toInt();
+        m_max_player    = maxplayer.attribute("value").toInt();
+        m_duration      = playingtime.attribute("value").toInt();
+        m_coverPath     = "http:" + cover.text();
+        m_thumbnailPath = "http:" + thumbnail.text();
+
+        QDomElement genres          = result.firstChildElement("link");
+
+        while ( !genres.isNull())
+        {
+            if ( genres.attribute("type").compare("boardgamecategory") == 0)
+            {
+                m_genres.append(genres.attribute("value"));
+            }
+            genres = genres.nextSiblingElement("link");
+        }
+
+        // create versions if exists
+        if (  !versions.isNull())
+        {
+            QDomElement version = versions.firstChildElement("item");
+            while ( !version.isNull())
+            {
+                VersionInfo_sp info = qSharedPointerCast<VersionInfo>( VersionInfo_sp( new VersionInfo()));
+
+                if (info->load( BGG_V2 , version ))
+                {
+                    // oblige de parser avant :-( :-(
+
+                    /*
+                     * astuce pour ne garder que la version nécessaire si besoin
+                     * sur une collection uniquement, sur une recherche il faut garder toutes les versions pour les proposer
+                     */
+                    //qDebug() << "here : " << QString("%1 %2 %3").arg( info->versionId()).arg( version_id ).arg(with_version );
+                    if ( info->versionId() == version_id && with_version )
+                    {
+                        m_versions << info;
+                    }
+                }
+
+                version = version.nextSiblingElement("item");
+            }
+        }
+
+        return true;
+
+
 
     }
 
@@ -520,7 +460,7 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomNode& resul
 ///
 ///
 bool
-BoardGameInfo::load( XML_API_VERSION /*version*/ , const QDomNode&/* result*/)
+BoardGameInfo::load( XML_API_VERSION /*version*/ , const QDomElement&/* result*/)
 {
 
     // don't use here

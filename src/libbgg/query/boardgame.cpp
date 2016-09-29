@@ -177,15 +177,22 @@ BoardGameQuery::Parse_XML_V1(QDomDocument & doc)
         </boardgames>
     */
 
-    QDomNodeList boardgames = doc.elementsByTagName("boardgame");
-    for (int i = 0; i < boardgames.size(); i++)
-    {
-        QDomNode n = boardgames.item(i);
+    QDomElement items = doc.firstChildElement("boardgames");
 
-        BoardGameInfo_sp bg_info= qSharedPointerCast<BoardGameInfo>( BoardGameInfo_sp( new BoardGameInfo()));
-        if ( bg_info->load( BGG_V1 , n ) )
-        {
-            m_results << bg_info;
+    if ( !items.isNull() )
+    {
+        QDomElement  item = items.firstChildElement("boardgame");
+
+        while ( !item.isNull() )
+            {
+
+
+            BoardGameInfo_sp bg_info= qSharedPointerCast<BoardGameInfo>( BoardGameInfo_sp( new BoardGameInfo()));
+            if ( bg_info->load( BGG_V1 , item ) )
+            {
+                m_results << bg_info;
+            }
+            item = item.nextSiblingElement("boardgame");
         }
     }
 
@@ -249,17 +256,22 @@ BoardGameQuery::Parse_XML_V2(QDomDocument & doc)
         </items>
     */
 
-    QDomNodeList boardgames = doc.elementsByTagName("item");
+    QDomElement items = doc.firstChildElement("items");
 
-    for (int i = 0; i < boardgames.size(); i++)
+    if ( !items.isNull() )
     {
-        QDomNode n = boardgames.item(i);
+        QDomElement  item = items.firstChildElement("item");
 
-        BoardGameInfo_sp bg_info= qSharedPointerCast<BoardGameInfo>( BoardGameInfo_sp( new BoardGameInfo()));
-        if ( bg_info->load_version( BGG_V2 , n , m_with_versions , m_bgid_list ) )
+        while ( !item.isNull() )
         {
-            qDebug() << "game : " << bg_info->title();
-            m_results << bg_info;
+
+
+            BoardGameInfo_sp bg_info= qSharedPointerCast<BoardGameInfo>( BoardGameInfo_sp( new BoardGameInfo()));
+            if ( bg_info->load_version( BGG_V2 , item , m_with_versions , m_bgid_list ) )
+            {
+                m_results << bg_info;
+            }
+            item = item.nextSiblingElement("item");
         }
     }
 

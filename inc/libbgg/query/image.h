@@ -47,19 +47,9 @@ private :
 
     BggApi &                m_api;
     MediaObject_sp          m_object;
-    QNetworkReply *         m_reply;// not used
+    QNetworkReply *         m_reply;// not used    
 
-    typedef struct
-    {
-        int                 id;
-        int                 versionid;
-        ImageType           type;
-        QUrl                url;
-        QNetworkReply *     reply;
-
-    }ImageData;
-
-    QQueue< ImageData>      m_queue;
+    QList< QNetworkReply *>      m_list;
 
 };
 }

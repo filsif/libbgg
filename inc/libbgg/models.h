@@ -43,7 +43,7 @@ class IBGGObject
 {
 public:
 
-    virtual bool    load                (XML_API_VERSION , const QDomNode&) = 0;
+    virtual bool    load                (XML_API_VERSION , const QDomElement&) = 0;
 };
 
 
@@ -76,7 +76,7 @@ public :
 
     static MediaObject_sp   null;
 
-    bool            load                (XML_API_VERSION , const QDomNode&);
+    bool            load                (XML_API_VERSION , const QDomElement&);
 
 
 
@@ -152,7 +152,7 @@ public:
 
     int                         id                          ( ) const;
 
-    virtual bool                load                        (XML_API_VERSION  , const QDomNode &);
+    virtual bool                load                        (XML_API_VERSION  , const QDomElement &);
 
 
 
@@ -214,7 +214,7 @@ public:
 
     int                         id                          ( ) const;
 
-    virtual bool                load                        (XML_API_VERSION , const QDomNode &);
+    virtual bool                load                        (XML_API_VERSION , const QDomElement &);
 
     inline const VersionInfoList_sp & versions     () const { return m_versions; }
 
@@ -255,8 +255,8 @@ public:
     *	\returns true if the infos could be read
     *	\returns false if the \a result object is empty
     */
-    bool                load            ( XML_API_VERSION api_version , const QDomNode&);
-    bool                load_version    ( XML_API_VERSION api_version , const QDomNode& , bool with_version , search_coll_infosList & list);
+    bool                load            ( XML_API_VERSION api_version , const QDomElement&);
+    bool                load_version    ( XML_API_VERSION api_version , const QDomElement& , bool with_version , search_coll_infosList & list);
 
     int                 boardgameId     () const { return id(); }
     const QString&		title           () const;

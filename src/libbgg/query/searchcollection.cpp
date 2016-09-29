@@ -31,7 +31,7 @@ SearchCollectionQuery::SearchCollectionQuery(BggApi &api, const QString &query)
     }
     else
     {
-        str = "collection/version=1&username=";
+        str = "collection/?version=1&username=";
         str += QString("%1").arg(query);
         url = url.resolved( str );
 
@@ -130,17 +130,27 @@ SearchCollectionQuery::Parse_XML_V1(QDomDocument & doc)
    </boardgames>
     */
 
-    QDomNodeList items = doc.elementsByTagName("item");
-    for (int i = 0; i < items.size(); i++)
+
+
+    QDomElement items = doc.firstChildElement("items");
+
+    if ( !items.isNull() )
     {
-        QDomNode n = items.item(i);
+        QDomElement  item = items.firstChildElement("item");
 
-        SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
-
-        if ( collection_summary->load( BGG_V1 , n ) )
+        while ( !item.isNull() )
         {
-            m_results << collection_summary;
+
+            SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
+
+            if ( collection_summary->load( BGG_V1 , item ) )
+            {
+                m_results << collection_summary;
+            }
+
+            item = item.nextSiblingElement("item");
         }
+
     }
 
 }
@@ -169,16 +179,22 @@ SearchCollectionQuery::Parse_XML_V2(QDomDocument & doc)
         </item>
     */
 
-    QDomNodeList items = doc.elementsByTagName("item");
-    for (int i = 0; i < items.size(); i++)
+    QDomElement items = doc.firstChildElement("items");
+
+    if ( !items.isNull() )
     {
-        QDomNode n = items.item(i);
+        QDomElement  item = items.firstChildElement("item");
 
-        SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
-
-        if ( collection_summary->load( BGG_V2 , n ) )
+        while ( !item.isNull() )
         {
-            m_results << collection_summary;
+
+            SearchCollectionSummary_sp collection_summary= qSharedPointerCast<SearchCollectionSummary>( SearchCollectionSummary_sp( new SearchCollectionSummary()));
+
+            if ( collection_summary->load( BGG_V2 , item ) )
+            {
+                m_results << collection_summary;
+            }
+            item = item.nextSiblingElement("item");
         }
     }
 }

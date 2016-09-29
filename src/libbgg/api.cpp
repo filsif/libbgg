@@ -20,7 +20,7 @@ BggApi::BggApi( QObject *parent , XML_API_VERSION version)
     else
     {
         m_baseUrl = "http://www.boardgamegeek.com/xmlapi2/";
-    }
+    }    
     m_mutex = new QMutex;
     m_qnam = new QNetworkAccessManager(this);
 }

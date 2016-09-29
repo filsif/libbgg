@@ -31,11 +31,24 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
     data.id = bg_info->id();
     data.versionid = -1;
     data.url = bg_info->coverPath();
-    qDebug() << "title : " << bg_info->title() <<" cover : " << data.url;
+    qDebug() << "id : " << QString("%1").arg(data.id) <<" cover : " << data.url;
     data.type = Cover;
     m_queue.enqueue( data );
+    if ( !bg_info->coverPath().isEmpty() )
+    {
+        QNetworkRequest request;
+        request.setUrl(  bg_info->coverPath() );
+
+        QNetworkReply * reply = m_api.getReply( request );
+        connect ( reply , SIGNAL(finished()) , this , SLOT(on_image_query_finished()));
+        reply->setProperty( "bg_id" , QVariant())
+
+        m_list.append( reply );
+
+
+    }
     data.url = bg_info->thumbnailPath();
-    qDebug() << "title : " << bg_info->title() <<" thumbnail : " << data.url;
+    qDebug() << "id : " << QString("%1").arg(data.id) <<" thumb : " << data.url;
     data.type = Thumbnail;
     m_queue.enqueue( data );
 
@@ -45,22 +58,25 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
         data.versionid = version->versionId();
         data.url = version->coverPath();
         data.type = Cover;
-        m_queue.enqueue( data );
+
+        if ( !data.url.isEmpty())
+        {
+            m_queue.enqueue( data );
+            qDebug() << "id : " << QString("%1").arg(data.id) << " vid :  "<< QString("%1").arg(data.versionid) <<  " cover : " << data.url;
+        }
         data.url = version->thumbnailPath();
         data.type = Thumbnail;
-        m_queue.enqueue( data );
+
+        if ( !data.url.isEmpty())
+        {
+            m_queue.enqueue( data );
+            qDebug() << "id : " << QString("%1").arg(data.id) << " vid :  "<< QString("%1").arg(data.versionid) <<  " thumb : " << data.url;
+        }
     }
 
-    // dequeue
 
-    ImageData &head_data = m_queue.head(); // we suppose that the queue is not empty at this time
 
-    QNetworkRequest request;
 
-    request.setUrl(  head_data.url );
-
-    head_data.reply = m_api.getReply( request );
-    connect ( head_data.reply , SIGNAL(finished()) , this , SLOT(on_image_query_finished()));
 
 }
 
@@ -93,6 +109,10 @@ ImageQuery::on_image_query_finished()
 {
     ImageData out_data;
     out_data = m_queue.dequeue();
+
+    qDebug() << "id : " << QString("%1").arg(out_data.id) << " vid :  "<< QString("%1").arg(out_data.versionid) <<  " type : " << QString("%1").arg(out_data.type);
+
+
 
     if (out_data.reply->error() != QNetworkReply::NoError)
     {
@@ -133,6 +153,8 @@ ImageQuery::on_image_query_finished()
         if ( m_queue.isEmpty())
         {
             emit result(this); //  emit when all the images have been downloaded
+
+            qDebug()<< "emit result " ;
         }
         else
         {

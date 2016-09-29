@@ -130,16 +130,23 @@ SearchQuery::Parse_XML_V1(QDomDocument & doc)
    </boardgames>
     */
 
-    QDomNodeList boardgames = doc.elementsByTagName("boardgame");
-    for (int i = 0; i < boardgames.size(); i++)
+    QDomElement items = doc.firstChildElement("boardgames");
+
+    if ( !items.isNull() )
     {
-        QDomNode n = boardgames.item(i);
+        QDomElement  item = items.firstChildElement("boardgame");
 
-        SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
-
-        if ( summary->load(BGG_V1 , n ) )
+        while ( !item.isNull() )
         {
-            m_results << summary;
+
+
+            SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
+
+            if ( summary->load(BGG_V1 , item ) )
+            {
+                m_results << summary;
+            }
+            item = item.nextSiblingElement("boardgame");
         }
     }
 
@@ -163,16 +170,23 @@ SearchQuery::Parse_XML_V2(QDomDocument & doc)
     </items>
     */
 
-    QDomNodeList boardgames = doc.elementsByTagName("item");
-    for (int i = 0; i < boardgames.size(); i++)
+    QDomElement items = doc.firstChildElement("items");
+
+    if ( !items.isNull() )
     {
-        QDomNode n = boardgames.item(i);
+        QDomElement  item = items.firstChildElement("item");
 
-        SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
-
-        if ( summary->load(BGG_V2 , n ) )
+        while ( !item.isNull() )
         {
-            m_results << summary;
+
+
+            SearchSummary_sp summary= qSharedPointerCast<SearchSummary>( SearchSummary_sp( new SearchSummary()));
+
+            if ( summary->load(BGG_V2 , item ) )
+            {
+                m_results << summary;
+            }
+            item = item.nextSiblingElement("item");
         }
     }
 }
