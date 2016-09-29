@@ -39,6 +39,7 @@ public:
      */
 
     QNetworkReply *         getReply                    ( QNetworkRequest & request );
+    const QNetworkAccessManager * manager               ( ) const { return m_qnam; }
 
     SearchQuery *           searchQuery                 ( const QString& title );
     SearchCollectionQuery * searchCollectionQuery       ( const QString& title );

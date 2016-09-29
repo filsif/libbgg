@@ -23,55 +23,60 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
 
     BoardGameInfo_sp bg_info = qSharedPointerCast<BoardGameInfo>(  m_object );
 
-
-    // Create queue of image to download
-
-    ImageData data;
-    data.reply = Q_NULLPTR;
-    data.id = bg_info->id();
-    data.versionid = -1;
-    data.url = bg_info->coverPath();
-    qDebug() << "id : " << QString("%1").arg(data.id) <<" cover : " << data.url;
-    data.type = Cover;
-    m_queue.enqueue( data );
-    if ( !bg_info->coverPath().isEmpty() )
+    if ( !bg_info->coverPath().isEmpty() && bg_info->coverPath().right( 3 ).compare(QString("jpg") , Qt::CaseInsensitive ) == 0 )
     {
         QNetworkRequest request;
         request.setUrl(  bg_info->coverPath() );
-
+        qDebug() << bg_info->coverPath();
         QNetworkReply * reply = m_api.getReply( request );
-        connect ( reply , SIGNAL(finished()) , this , SLOT(on_image_query_finished()));
-        reply->setProperty( "bg_id" , QVariant())
-
+        connect ( reply , SIGNAL(finished( )) , this , SLOT(on_image_query_finished( )));
+        reply->setProperty( "bg_id" , QVariant(bg_info->id()));
+        reply->setProperty( "bg_versionid" , QVariant(-1));
+        reply->setProperty( "bg_type" , QVariant(Cover));
         m_list.append( reply );
-
-
     }
-    data.url = bg_info->thumbnailPath();
-    qDebug() << "id : " << QString("%1").arg(data.id) <<" thumb : " << data.url;
-    data.type = Thumbnail;
-    m_queue.enqueue( data );
+    /*if ( !bg_info->thumbnailPath().isEmpty() )
+    {
+        QNetworkRequest request;
+        request.setUrl(  bg_info->thumbnailPath() );
+        qDebug() << bg_info->thumbnailPath();
+        QNetworkReply * reply = m_api.getReply( request );
+        connect ( reply , SIGNAL(finished( )) , this , SLOT(on_image_query_finished( )));
+        reply->setProperty( "bg_id" , QVariant(bg_info->id()));
+        reply->setProperty( "bg_versionid" , QVariant(-1));
+        reply->setProperty( "bg_type" , QVariant(Thumbnail));
+        m_list.append( reply );
+    }*/
 
     const VersionInfoList_sp & versions = bg_info->versions();
     foreach( VersionInfo_sp version , versions)
-    {
-        data.versionid = version->versionId();
-        data.url = version->coverPath();
-        data.type = Cover;
+    {        
 
-        if ( !data.url.isEmpty())
+        if ( !version->coverPath().isEmpty()&& version->coverPath().right( 3 ).compare(QString("jpg") , Qt::CaseInsensitive ) == 0 )
         {
-            m_queue.enqueue( data );
-            qDebug() << "id : " << QString("%1").arg(data.id) << " vid :  "<< QString("%1").arg(data.versionid) <<  " cover : " << data.url;
+            QNetworkRequest request;
+            request.setUrl(  version->coverPath() );
+            qDebug() << version->coverPath();
+            QNetworkReply * reply = m_api.getReply( request );
+            connect ( reply , SIGNAL(finished( )) , this , SLOT(on_image_query_finished( )));
+            reply->setProperty( "bg_id" , QVariant(bg_info->id()));
+            reply->setProperty( "bg_versionid" , QVariant(version->versionId()));
+            reply->setProperty( "bg_type" , QVariant(Cover));
+            m_list.append( reply );
         }
-        data.url = version->thumbnailPath();
-        data.type = Thumbnail;
-
-        if ( !data.url.isEmpty())
+/*
+        if ( !version->thumbnailPath().isEmpty() )
         {
-            m_queue.enqueue( data );
-            qDebug() << "id : " << QString("%1").arg(data.id) << " vid :  "<< QString("%1").arg(data.versionid) <<  " thumb : " << data.url;
-        }
+            QNetworkRequest request;
+            request.setUrl(  version->thumbnailPath() );
+            qDebug() << version->thumbnailPath();
+            QNetworkReply * reply = m_api.getReply( request );
+            connect ( reply , SIGNAL(finished( )) , this , SLOT(on_image_query_finished( )));
+            reply->setProperty( "bg_id" , QVariant(bg_info->id()));
+            reply->setProperty( "bg_versionid" , QVariant(version->versionId()));
+            reply->setProperty( "bg_type" , QVariant(Thumbnail));
+            m_list.append( reply );
+        }*/
     }
 
 
@@ -105,73 +110,80 @@ ImageQuery::abort()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-ImageQuery::on_image_query_finished()
+ImageQuery::on_image_query_finished( )
 {
-    ImageData out_data;
-    out_data = m_queue.dequeue();
+    QNetworkReply * reply = qobject_cast<QNetworkReply*>( sender());
 
-    qDebug() << "id : " << QString("%1").arg(out_data.id) << " vid :  "<< QString("%1").arg(out_data.versionid) <<  " type : " << QString("%1").arg(out_data.type);
-
-
-
-    if (out_data.reply->error() != QNetworkReply::NoError)
+    if ( reply )
     {
+        bool rem = m_list.removeOne( reply );
 
-        qWarning() << "Network error. Error code is : " << out_data.reply->error();
-    }
-    else
-    {
+        QVariant id = reply->property("bg_id");
+        QVariant vid = reply->property("bg_versionid");
+        QVariant type = reply->property("bg_type");
 
+        qDebug() << "url : " << reply->url().toString() << " id :" << id.toString() << " vid : " << vid.toString();
 
-        QPixmap pixmap;
-        pixmap.loadFromData( out_data.reply->readAll());
-        if (!pixmap.isNull())
+        if (reply->error() != QNetworkReply::NoError)
         {
-            if ( out_data.versionid == -1 )
+
+            qWarning() << "Network error. Error code is : " << reply->error() <<"id: " << id.toString()<< " vid : " << vid.toString();
+        }
+        else
+        {
+            qDebug() << "reply size :  " << QString("%1").arg(reply->size()) << reply->url().toString();
+            QPixmap pixmap;
+            pixmap.loadFromData( reply->readAll());
+            if (!pixmap.isNull())
             {
-                 m_object->setImage(out_data.type, pixmap);
+                BoardGameInfo_sp bg_info = qSharedPointerCast<BoardGameInfo>(  m_object );
+
+                if ( vid.toInt() == -1 )
+                {
+
+                    QString fn=  "./" + QString("%1_cover_%2.jpg").arg(bg_info->id()).arg( type.toInt());
+                    pixmap.save(fn, "JPG");
+
+                     m_object->setImage((Bgg::ImageType )type.toInt(), pixmap);
+                }
+                else
+                {
+
+                    const VersionInfoList_sp & versions = bg_info->versions();
+                    foreach( VersionInfo_sp version , versions)
+                    {
+                        if ( version->versionId() == vid.toInt() )
+                        {
+                            QString fn=  "./" + QString("%1_%2_cover_%3.jpg").arg(bg_info->id()).arg(vid.toInt()).arg( type.toInt());
+                            pixmap.save(fn, "JPG");
+                            version->setImage( (Bgg::ImageType )type.toInt() , pixmap );
+                        }
+                    }
+                }
+
             }
             else
             {
-                BoardGameInfo_sp bg_info = qSharedPointerCast<BoardGameInfo>(  m_object );
-                const VersionInfoList_sp & versions = bg_info->versions();
-                foreach( VersionInfo_sp version , versions)
-                {
-                    if ( version->versionId() == out_data.versionid )
-                    {
-                        version->setImage( out_data.type , pixmap );
-                    }
-                }
+                qWarning() << "cover is null";
             }
 
-        }
-        else
-        {
-            qWarning() << "cover is null";
+            if ( m_list.isEmpty())
+            {
+                //emit result(this); //  emit when all the images have been downloaded
+
+                static int uu = 0;
+                qDebug()<< "emit result " << QString("%1").arg(uu++) ;
+            }
         }
 
-        if ( m_queue.isEmpty())
-        {
-            emit result(this); //  emit when all the images have been downloaded
 
-            qDebug()<< "emit result " ;
-        }
-        else
-        {
-            // next queue element
-            ImageData &head_data = m_queue.head(); // we suppose that the queue is not empty at this time
-            QNetworkRequest request;
-            request.setUrl(  head_data.url );
-            head_data.reply = m_api.getReply( request );
-
-            connect ( head_data.reply , SIGNAL(finished()) , this , SLOT(on_image_query_finished()));
-
-        }
+        reply->deleteLater();
+        reply = Q_NULLPTR;
     }
-
-
-    out_data.reply->deleteLater();
-    out_data.reply = Q_NULLPTR;
+    else
+    {
+        qCritical() << "sender is not a QNetworkReply";
+    }
 }
 
 

@@ -155,8 +155,8 @@ SearchCollectionSummary::load( XML_API_VERSION version ,const QDomElement & resu
 
         m_id                        = result.attribute("objectid").toInt();
         m_title                     = name.text();
-        m_coverPath                 = "http:" + cover.text();
-        m_thumbnailPath             = "http:" + thumbnail.text();
+        if ( !cover.text().isEmpty())       m_coverPath                 = "http:" + cover.text();
+        if ( !thumbnail.text().isEmpty())   m_thumbnailPath             = "http:" + thumbnail.text();
 
         return true;
     }
@@ -170,8 +170,8 @@ SearchCollectionSummary::load( XML_API_VERSION version ,const QDomElement & resu
 
         m_id                        = result.attribute("objectid").toInt();
         m_title                     = name.text();
-        m_coverPath                 = "http:" + cover.text();
-        m_thumbnailPath             = "http:" + thumbnail.text();
+        if ( !cover.text().isEmpty())       m_coverPath                 = "http:" + cover.text();
+        if ( !thumbnail.text().isEmpty())   m_thumbnailPath             = "http:" + thumbnail.text();
 
         // create versions if exists
         if ( !versions.isNull())
@@ -293,8 +293,8 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomElement& re
         m_min_player    = minplayer.text().toInt();
         m_max_player    = maxplayer.text().toInt();
         m_duration      = playingtime.text().toInt();
-        m_coverPath     = "http:" + cover.text();
-        m_thumbnailPath = "http:" + thumbnail.text();
+        if ( !cover.text().isEmpty())       m_coverPath     = "http:" + cover.text();
+        if ( !thumbnail.text().isEmpty() )  m_thumbnailPath = "http:" + thumbnail.text();
 
         QDomElement genres          = result.firstChildElement("boardgamecategory");
 
@@ -402,8 +402,8 @@ BoardGameInfo::load_version( XML_API_VERSION api_version , const QDomElement& re
         m_min_player    = minplayer.attribute("value").toInt();
         m_max_player    = maxplayer.attribute("value").toInt();
         m_duration      = playingtime.attribute("value").toInt();
-        m_coverPath     = "http:" + cover.text();
-        m_thumbnailPath = "http:" + thumbnail.text();
+        if ( ! cover.text().isEmpty())        m_coverPath     = "http:" + cover.text();
+        if ( ! thumbnail.text().isEmpty() )   m_thumbnailPath = "http:" + thumbnail.text();
 
         QDomElement genres          = result.firstChildElement("link");
 
@@ -498,8 +498,8 @@ VersionInfo::load(XML_API_VERSION /*version*/ ,  const QDomElement & elt)
         language = language.nextSiblingElement("link");
     }
     m_year.setDate( yearpublished.attribute("value").toInt() , 1 , 1);
-    m_coverPath     = "http:" + cover.text();
-    m_thumbnailPath = "http:" + thumbnail.text();
+    if ( !cover.text().isEmpty())       m_coverPath     = "http:" + cover.text();
+    if ( !thumbnail.text().isEmpty())    m_thumbnailPath = "http:" + thumbnail.text();
 
 
     return true;

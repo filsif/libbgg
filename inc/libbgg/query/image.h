@@ -27,14 +27,14 @@ class ImageQuery :
 {
     Q_OBJECT
 public:
-    explicit            ImageQuery             (BggApi & api , const MediaObject_sp object );
-    virtual             ~ImageQuery            ();
+    explicit            ImageQuery              ( BggApi & api , const MediaObject_sp object );
+    virtual             ~ImageQuery             ( );
 
 signals:
-    void                result                 ( Bgg::ImageQuery *);
+    void                result                  ( Bgg::ImageQuery *);
 
 private slots:
-    void                on_image_query_finished();
+    void                on_image_query_finished ( );
 
 public :
 
