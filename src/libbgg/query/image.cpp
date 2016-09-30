@@ -23,7 +23,7 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
 
     BoardGameInfo_sp bg_info = qSharedPointerCast<BoardGameInfo>(  m_object );
 
-    if ( !bg_info->coverPath().isEmpty() && bg_info->coverPath().right( 3 ).compare(QString("jpg") , Qt::CaseInsensitive ) == 0 )
+    /*if ( !bg_info->coverPath().isEmpty() && bg_info->coverPath().right( 3 ).compare(QString("jpg") , Qt::CaseInsensitive ) == 0 )
     {
         QNetworkRequest request;
         request.setUrl(  bg_info->coverPath() );
@@ -34,8 +34,8 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
         reply->setProperty( "bg_versionid" , QVariant(-1));
         reply->setProperty( "bg_type" , QVariant(Cover));
         m_list.append( reply );
-    }
-    /*if ( !bg_info->thumbnailPath().isEmpty() )
+    }*/
+    if ( !bg_info->thumbnailPath().isEmpty() )
     {
         QNetworkRequest request;
         request.setUrl(  bg_info->thumbnailPath() );
@@ -46,13 +46,13 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
         reply->setProperty( "bg_versionid" , QVariant(-1));
         reply->setProperty( "bg_type" , QVariant(Thumbnail));
         m_list.append( reply );
-    }*/
+    }
 
     const VersionInfoList_sp & versions = bg_info->versions();
     foreach( VersionInfo_sp version , versions)
     {        
 
-        if ( !version->coverPath().isEmpty()&& version->coverPath().right( 3 ).compare(QString("jpg") , Qt::CaseInsensitive ) == 0 )
+        /*if ( !version->coverPath().isEmpty()&& version->coverPath().right( 3 ).compare(QString("jpg") , Qt::CaseInsensitive ) == 0 )
         {
             QNetworkRequest request;
             request.setUrl(  version->coverPath() );
@@ -63,8 +63,8 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
             reply->setProperty( "bg_versionid" , QVariant(version->versionId()));
             reply->setProperty( "bg_type" , QVariant(Cover));
             m_list.append( reply );
-        }
-/*
+        }*/
+
         if ( !version->thumbnailPath().isEmpty() )
         {
             QNetworkRequest request;
@@ -76,7 +76,7 @@ ImageQuery::ImageQuery(BggApi &api, const MediaObject_sp  object )
             reply->setProperty( "bg_versionid" , QVariant(version->versionId()));
             reply->setProperty( "bg_type" , QVariant(Thumbnail));
             m_list.append( reply );
-        }*/
+        }
     }
 
 
@@ -154,8 +154,8 @@ ImageQuery::on_image_query_finished( )
                     {
                         if ( version->versionId() == vid.toInt() )
                         {
-                            QString fn=  "./" + QString("%1_%2_cover_%3.jpg").arg(bg_info->id()).arg(vid.toInt()).arg( type.toInt());
-                            pixmap.save(fn, "JPG");
+                            /*QString fn=  "./" + QString("%1_%2_cover_%3.jpg").arg(bg_info->id()).arg(vid.toInt()).arg( type.toInt());
+                            pixmap.save(fn, "JPG");*/
                             version->setImage( (Bgg::ImageType )type.toInt() , pixmap );
                         }
                     }
@@ -169,7 +169,7 @@ ImageQuery::on_image_query_finished( )
 
             if ( m_list.isEmpty())
             {
-                //emit result(this); //  emit when all the images have been downloaded
+                emit result(this); //  emit when all the images have been downloaded
 
                 static int uu = 0;
                 qDebug()<< "emit result " << QString("%1").arg(uu++) ;

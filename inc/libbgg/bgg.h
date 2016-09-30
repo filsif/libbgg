@@ -22,6 +22,7 @@ public :
     virtual ~search_coll_infos() { }
     int id;
     int version_id; // -1 if not exists
+    QString name;       // to have name in real language don't find another way to have it ...
 
 };
 

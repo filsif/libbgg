@@ -152,6 +152,7 @@ public:
 
     int                         id                          ( ) const;
 
+
     virtual bool                load                        (XML_API_VERSION  , const QDomElement &);
 
 
@@ -213,6 +214,7 @@ public:
 
 
     int                         id                          ( ) const;
+    const QString &             title                       ( ) const;
 
     virtual bool                load                        (XML_API_VERSION , const QDomElement &);
 
@@ -267,6 +269,8 @@ public:
     int                 maxPlayer       () const;
     int                 duration        () const;
 
+    QByteArray          toJson          ();
+
     const QList<QString> & genres       () const;
     inline const VersionInfoList_sp & versions     () const { return m_versions; }
 
@@ -301,6 +305,11 @@ inline int SearchSummary::id() const
 inline int SearchCollectionSummary::id() const
 {
     return m_id;
+}
+
+inline const QString& SearchCollectionSummary::title() const
+{
+    return m_title;
 }
 
 inline const QString& BoardGameInfo::title() const

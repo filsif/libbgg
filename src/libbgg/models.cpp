@@ -1,6 +1,10 @@
 #include <libbgg/models.h>
 #include <QTextDocument>
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
 
 namespace Bgg
 {
@@ -467,6 +471,62 @@ BoardGameInfo::load( XML_API_VERSION /*version*/ , const QDomElement&/* result*/
 
     return false;
 }
+
+///
+/// \brief BoardGameInfo::toJson
+/// \return
+///
+QByteArray
+BoardGameInfo::toJson()
+{
+    // serialize BoardGameObject to Json QByteArray
+    QJsonDocument doc;
+
+    QJsonObject boardgame;
+
+    boardgame.insert( QString("title") ,QJsonValue(m_title));
+    boardgame.insert( QString("synopsis") ,QJsonValue(m_synopsis));
+    boardgame.insert( QString("year") ,QJsonValue(m_year.year()));
+    boardgame.insert( QString("min_age") ,QJsonValue(m_min_age));
+    boardgame.insert( QString("min_player") ,QJsonValue(m_min_player));
+    boardgame.insert( QString("max_player") ,QJsonValue(m_max_player));
+    boardgame.insert( QString("duration") ,QJsonValue(m_duration));
+    boardgame.insert( QString("synopsis") ,QJsonValue(m_synopsis));
+    boardgame.insert( QString("bgg_id") ,QJsonValue(m_id));
+
+    QJsonArray genres;
+
+    foreach(QString q , m_genres )
+    {
+        genres.append( QJsonValue(q));
+    }
+    boardgame.insert( QString("genres") ,QJsonValue(genres));
+
+    QJsonArray versions;
+    foreach(VersionInfo_sp v , m_versions )
+    {
+
+        QJsonObject version;
+
+        version.insert(QString("title"), QJsonValue(v->title()));
+        version.insert(QString("year"), QJsonValue(v->year().year()));
+        version.insert(QString("version_id"), QJsonValue(v->versionId()));
+        version.insert(QString("language"), QJsonValue(v->language()));
+
+        versions.append( QJsonValue(version));
+    }
+
+    boardgame.insert( QString("versions") ,QJsonValue(versions));
+
+
+    doc.setObject( boardgame );
+
+    return doc.toJson();
+
+
+}
+
+
 
 
 bool
