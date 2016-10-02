@@ -116,7 +116,7 @@ ImageQuery::on_image_query_finished( )
 
     if ( reply )
     {
-        bool rem = m_list.removeOne( reply );
+        m_list.removeOne( reply );
 
         QVariant id = reply->property("bg_id");
         QVariant vid = reply->property("bg_versionid");
@@ -141,8 +141,8 @@ ImageQuery::on_image_query_finished( )
                 if ( vid.toInt() == -1 )
                 {
 
-                    QString fn=  "./" + QString("%1_cover_%2.jpg").arg(bg_info->id()).arg( type.toInt());
-                    pixmap.save(fn, "JPG");
+                    /*QString fn=  "./" + QString("%1_cover_%2.jpg").arg(bg_info->id()).arg( type.toInt());
+                    pixmap.save(fn, "JPG");*/
 
                      m_object->setImage((Bgg::ImageType )type.toInt(), pixmap);
                 }
